@@ -33,6 +33,8 @@ struct file_struct {
   file_t* previous;
   time_t modificationTime;
   fileType_t fileType;
+  int extensionLength;
+  int fullNameLength;
   int nameLength;
 };
 
@@ -109,6 +111,7 @@ static file_t* file_new (const char* fullName) {
 
   file_t* result = malloc (sizeof (file_t));
   result->fullName = fullNameCopy;
+  result->fullNameLength = fullNameLength;
   result->fileType = fileInfo.fileType;
   result->name = strrchr (fullNameCopy, '/') + 1;
   result->nameLength = strlen (result->name);
@@ -121,6 +124,7 @@ static file_t* file_new (const char* fullName) {
   } else {
     ++result->extension;
   }
+  result->extensionLength = strlen (result->extension);
   return result;
 }
 
@@ -151,6 +155,10 @@ const char* file_extension (file_t* this) {
   return this->extension;
 }
 
+int file_extensionLength (file_t* this) {
+  return this->extensionLength;
+}
+
 file_t* file_firstEntry (file_t* this) {
   if (this == NULL) {
     return NULL;
@@ -163,6 +171,10 @@ file_t* file_firstEntry (file_t* this) {
 
 const char* file_fullName (file_t* this) {
   return this->fullName;
+}
+
+int file_fullNameLength (file_t* this) {
+  return this->fullNameLength;
 }
 
 time_t file_modificationTime (file_t* this) {
