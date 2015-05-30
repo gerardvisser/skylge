@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <time.h>
 #include "commandLineArgs.h"
-#include "dirEntry.h"
+#include "file.h"
 
 void testCommandLineArgs (int argc, char** args);
-void testDirEntry (int argc, char** args);
+void testFile (int argc, char** args);
 void testStringList (void);
 
 int main (int argc, char** args, char** env) {
-  testDirEntry (argc, args);
+  testFile (argc, args);
 
   return 0;
 }
@@ -20,12 +20,12 @@ void printBoolOptie (char optkey, bool value) {
 
 void printDirectory (const char* dirName) {
   printf ("\nPrinting the contents of directory '%s':\n", dirName);
-  dirEntry_t* const entries = dirEntry_readDir (dirName);
-  dirEntry_t* entry = entries;
+  file_t* const entries = file_readDir (dirName);
+  file_t* entry = entries;
   struct tm cal;
   while (entry != NULL) {
     const char* colour;
-    switch (dirEntry_fileType (entry)) {
+    switch (file_type (entry)) {
     case FILE_TYPE_DIRECTORY:
       colour = "\x1B[38;5;19m";
       break;
@@ -37,7 +37,7 @@ void printDirectory (const char* dirName) {
     default:
       colour = "\x1B[0m";
     }
-    time_t modificationTime = dirEntry_modificationTime (entry);
+    time_t modificationTime = file_modificationTime (entry);
     localtime_r (&modificationTime, &cal);
     printf ("  %s(%d-%02d-%02d %02d:%02d:%02d) %s (%s) (%s)\x1B[0m\n", colour,
                                                                        cal.tm_year + 1900,
@@ -46,12 +46,12 @@ void printDirectory (const char* dirName) {
                                                                        cal.tm_hour,
                                                                        cal.tm_min,
                                                                        cal.tm_sec,
-                                                                       dirEntry_name (entry),
-                                                                       dirEntry_extension (entry),
-                                                                       dirEntry_fullName (entry));
-    entry = dirEntry_next (entry);
+                                                                       file_name (entry),
+                                                                       file_extension (entry),
+                                                                       file_fullName (entry));
+    entry = file_next (entry);
   }
-  dirEntry_delete (entries);
+  file_delete (entries);
 }
 
 void printList (stringList_t* list) {
@@ -124,7 +124,7 @@ void testCommandLineArgs (int argc, char** args) {
   commandLineArgs_delete (commandLineArgs);
 }
 
-void testDirEntry (int argc, char** args) {
+void testFile (int argc, char** args) {
   commandLineArgs_t* commandLineArgs = commandLineArgs_new (argc, args, NULL);
   stringList_t* mainArgs = commandLineArgs_getMainArgs (commandLineArgs);
   if (stringList_length (mainArgs) == 0) {

@@ -22,15 +22,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include "dirEntry.h"
 #include "errors.h"
+#include "file.h"
 
-struct dirEntry_struct {
+struct file_struct {
   const char* name;
   const char* fullName;
   const char* extension;
-  dirEntry_t* next;
-  dirEntry_t* previous;
+  file_t* next;
+  file_t* previous;
   time_t modificationTime;
   fileType_t fileType;
   int nameLength;
@@ -99,7 +99,7 @@ static DIR* openDirectory (const char* dirName) {
   return result;
 }
 
-static dirEntry_t* dirEntry_new (const char* fullName) {
+static file_t* file_new (const char* fullName) {
   fileInfo_t fileInfo;
   getFileInfo (&fileInfo, fullName);
 
@@ -107,7 +107,7 @@ static dirEntry_t* dirEntry_new (const char* fullName) {
   char* fullNameCopy = malloc (fullNameLength + 1);
   strcpy (fullNameCopy, fullName);
 
-  dirEntry_t* result = malloc (sizeof (dirEntry_t));
+  file_t* result = malloc (sizeof (file_t));
   result->fullName = fullNameCopy;
   result->fileType = fileInfo.fileType;
   result->name = strrchr (fullNameCopy, '/') + 1;
@@ -124,21 +124,21 @@ static dirEntry_t* dirEntry_new (const char* fullName) {
   return result;
 }
 
-static dirEntry_t* dirEntry_append (dirEntry_t* this, const char* fullName) {
+static file_t* file_append (file_t* this, const char* fullName) {
   if (this == NULL) {
-    return dirEntry_new (fullName);
+    return file_new (fullName);
   }
-  this->next = dirEntry_new (fullName);
+  this->next = file_new (fullName);
   this->next->previous = this;
   return this->next;
 }
 
-void dirEntry_delete (dirEntry_t* this) {
+void file_delete (file_t* this) {
   if (this == NULL) {
     return;
   }
-  this = dirEntry_firstEntry (this);
-  dirEntry_t* next;
+  this = file_firstEntry (this);
+  file_t* next;
   do {
     next = this->next;
     free ((void*) this->fullName);
@@ -147,15 +147,11 @@ void dirEntry_delete (dirEntry_t* this) {
   } while (this != NULL);
 }
 
-const char* dirEntry_extension (dirEntry_t* this) {
+const char* file_extension (file_t* this) {
   return this->extension;
 }
 
-fileType_t dirEntry_fileType (dirEntry_t* this) {
-  return this->fileType;
-}
-
-dirEntry_t* dirEntry_firstEntry (dirEntry_t* this) {
+file_t* file_firstEntry (file_t* this) {
   if (this == NULL) {
     return NULL;
   }
@@ -165,31 +161,31 @@ dirEntry_t* dirEntry_firstEntry (dirEntry_t* this) {
   return this;
 }
 
-const char* dirEntry_fullName (dirEntry_t* this) {
+const char* file_fullName (file_t* this) {
   return this->fullName;
 }
 
-time_t dirEntry_modificationTime (dirEntry_t* this) {
+time_t file_modificationTime (file_t* this) {
   return this->modificationTime;
 }
 
-const char* dirEntry_name (dirEntry_t* this) {
+const char* file_name (file_t* this) {
   return this->name;
 }
 
-int dirEntry_nameLength (dirEntry_t* this) {
+int file_nameLength (file_t* this) {
   return this->nameLength;
 }
 
-dirEntry_t* dirEntry_next (dirEntry_t* this) {
+file_t* file_next (file_t* this) {
   return this->next;
 }
 
-dirEntry_t* dirEntry_previous (dirEntry_t* this) {
+file_t* file_previous (file_t* this) {
   return this->previous;
 }
 
-dirEntry_t* dirEntry_readDir (const char* dirName) {
+file_t* file_readDir (const char* dirName) {
   char* fullName = malloc (8192);
   char* dirNameEnd = stpcpy (fullName, dirName);
   if (dirNameEnd == fullName) {
@@ -203,18 +199,22 @@ dirEntry_t* dirEntry_readDir (const char* dirName) {
     ++dirNameEnd;
   }
 
-  dirEntry_t* entryList = NULL;
+  file_t* entryList = NULL;
   DIR* dir = openDirectory (dirName);
   struct dirent* entry = readdir (dir);
   while (entry != NULL) {
     if (!(strcmp (entry->d_name, ".") == 0 | strcmp (entry->d_name, "..") == 0)) {
       strcpy (dirNameEnd, entry->d_name);
-      entryList = dirEntry_append (entryList, fullName);
+      entryList = file_append (entryList, fullName);
     }
     entry = readdir (dir);
   }
   closedir (dir);
   free (fullName);
-  entryList = dirEntry_firstEntry (entryList);
+  entryList = file_firstEntry (entryList);
   return entryList;
+}
+
+fileType_t file_type (file_t* this) {
+  return this->fileType;
 }

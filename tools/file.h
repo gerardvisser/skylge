@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ___DIR_ENTRY_INCLUDED
-#define ___DIR_ENTRY_INCLUDED
+#ifndef ___FILE_INCLUDED
+#define ___FILE_INCLUDED
 
 #include <time.h>
 
@@ -29,19 +29,19 @@ typedef enum {
   FILE_TYPE_UNKNOWN
 } fileType_t;
 
-struct dirEntry_struct;
-typedef struct dirEntry_struct dirEntry_t;
+struct file_struct;
+typedef struct file_struct file_t;
 
-void        dirEntry_delete (dirEntry_t* this);
-const char* dirEntry_extension (dirEntry_t* this);
-fileType_t  dirEntry_fileType (dirEntry_t* this);
-dirEntry_t* dirEntry_firstEntry (dirEntry_t* this);
-const char* dirEntry_fullName (dirEntry_t* this);
-time_t      dirEntry_modificationTime (dirEntry_t* this);
-const char* dirEntry_name (dirEntry_t* this);
-int         dirEntry_nameLength (dirEntry_t* this);
-dirEntry_t* dirEntry_next (dirEntry_t* this);
-dirEntry_t* dirEntry_previous (dirEntry_t* this);
-dirEntry_t* dirEntry_readDir (const char* dirName);
+void        file_delete (file_t* this);
+const char* file_extension (file_t* this);
+file_t*     file_firstEntry (file_t* this);
+const char* file_fullName (file_t* this);
+time_t      file_modificationTime (file_t* this);
+const char* file_name (file_t* this);
+int         file_nameLength (file_t* this);
+file_t*     file_next (file_t* this);
+file_t*     file_previous (file_t* this);
+file_t*     file_readDir (const char* dirName);
+fileType_t  file_type (file_t* this);
 
 #endif
