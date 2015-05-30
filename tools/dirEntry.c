@@ -27,14 +27,21 @@
 
 struct dirEntry_struct {
   const char* name;
+  const char* fullName;
   const char* extension;
   dirEntry_t* next;
   dirEntry_t* previous;
+  time_t modificationTime;
   fileType_t fileType;
   int nameLength;
 };
 
-static fileType_t getFileType (const char* filename) {
+typedef struct {
+  time_t modificationTime;
+  fileType_t fileType;
+} fileInfo_t;
+
+static void getFileInfo (fileInfo_t* fileInfo, const char* filename) {
   struct stat attrs;
   if (lstat (filename, &attrs)) {
     switch (errno) {
@@ -52,14 +59,15 @@ static fileType_t getFileType (const char* filename) {
     }
   }
   if (S_ISDIR (attrs.st_mode)) {
-    return FILE_TYPE_DIRECTORY;
+    fileInfo->fileType = FILE_TYPE_DIRECTORY;
   } else if (S_ISREG (attrs.st_mode)) {
-    return FILE_TYPE_REGULAR;
+    fileInfo->fileType = FILE_TYPE_REGULAR;
   } else if (S_ISLNK (attrs.st_mode)) {
-    return FILE_TYPE_SYMLINK;
+    fileInfo->fileType = FILE_TYPE_SYMLINK;
   } else {
-    return FILE_TYPE_UNKNOWN;
+    fileInfo->fileType = FILE_TYPE_UNKNOWN;
   }
+  fileInfo->modificationTime = attrs.st_mtime;
 }
 
 static DIR* openDirectory (const char* dirName) {
@@ -91,29 +99,36 @@ static DIR* openDirectory (const char* dirName) {
   return result;
 }
 
-static dirEntry_t* dirEntry_new (const char* name, fileType_t fileType) {
+static dirEntry_t* dirEntry_new (const char* fullName) {
+  fileInfo_t fileInfo;
+  getFileInfo (&fileInfo, fullName);
+
+  const int fullNameLength = strlen (fullName);
+  char* fullNameCopy = malloc (fullNameLength + 1);
+  strcpy (fullNameCopy, fullName);
+
   dirEntry_t* result = malloc (sizeof (dirEntry_t));
-  result->nameLength = strlen (name);
-  char* nameCopy = malloc (result->nameLength + 1);
-  strcpy (nameCopy, name);
-  result->fileType = fileType;
-  result->name = nameCopy;
+  result->fullName = fullNameCopy;
+  result->fileType = fileInfo.fileType;
+  result->name = strrchr (fullNameCopy, '/') + 1;
+  result->nameLength = strlen (result->name);
   result->previous = NULL;
   result->next = NULL;
-  result->extension = strrchr (nameCopy, '.');
+  result->modificationTime = fileInfo.modificationTime;
+  result->extension = strrchr (result->name, '.');
   if (result->extension == NULL) {
-    result->extension = nameCopy + result->nameLength;
+    result->extension = result->name + result->nameLength;
   } else {
     ++result->extension;
   }
   return result;
 }
 
-static dirEntry_t* dirEntry_append (dirEntry_t* this, const char* name, fileType_t fileType) {
+static dirEntry_t* dirEntry_append (dirEntry_t* this, const char* fullName) {
   if (this == NULL) {
-    return dirEntry_new (name, fileType);
+    return dirEntry_new (fullName);
   }
-  this->next = dirEntry_new (name, fileType);
+  this->next = dirEntry_new (fullName);
   this->next->previous = this;
   return this->next;
 }
@@ -126,7 +141,7 @@ void dirEntry_delete (dirEntry_t* this) {
   dirEntry_t* next;
   do {
     next = this->next;
-    free ((void*) this->name);
+    free ((void*) this->fullName);
     free (this);
     this = next;
   } while (this != NULL);
@@ -150,6 +165,14 @@ dirEntry_t* dirEntry_firstEntry (dirEntry_t* this) {
   return this;
 }
 
+const char* dirEntry_fullName (dirEntry_t* this) {
+  return this->fullName;
+}
+
+time_t dirEntry_modificationTime (dirEntry_t* this) {
+  return this->modificationTime;
+}
+
 const char* dirEntry_name (dirEntry_t* this) {
   return this->name;
 }
@@ -169,7 +192,12 @@ dirEntry_t* dirEntry_previous (dirEntry_t* this) {
 dirEntry_t* dirEntry_readDir (const char* dirName) {
   char* fullName = malloc (8192);
   char* dirNameEnd = stpcpy (fullName, dirName);
-  if (dirNameEnd != fullName && dirNameEnd[-1] != '/') {
+  if (dirNameEnd == fullName) {
+    dirNameEnd[0] = '.';
+    dirNameEnd[1] = '/';
+    dirNameEnd[2] = 0;
+    dirNameEnd += 2;
+  } else if (dirNameEnd[-1] != '/') {
     dirNameEnd[0] = '/';
     dirNameEnd[1] = 0;
     ++dirNameEnd;
@@ -181,8 +209,7 @@ dirEntry_t* dirEntry_readDir (const char* dirName) {
   while (entry != NULL) {
     if (!(strcmp (entry->d_name, ".") == 0 | strcmp (entry->d_name, "..") == 0)) {
       strcpy (dirNameEnd, entry->d_name);
-      fileType_t fileType = getFileType (fullName);
-      entryList = dirEntry_append (entryList, entry->d_name, fileType);
+      entryList = dirEntry_append (entryList, fullName);
     }
     entry = readdir (dir);
   }

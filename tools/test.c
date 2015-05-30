@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "commandLineArgs.h"
 #include "dirEntry.h"
 
@@ -21,6 +22,7 @@ void printDirectory (const char* dirName) {
   printf ("\nPrinting the contents of directory '%s':\n", dirName);
   dirEntry_t* const entries = dirEntry_readDir (dirName);
   dirEntry_t* entry = entries;
+  struct tm cal;
   while (entry != NULL) {
     const char* colour;
     switch (dirEntry_fileType (entry)) {
@@ -35,7 +37,18 @@ void printDirectory (const char* dirName) {
     default:
       colour = "\x1B[0m";
     }
-    printf ("  %s%s (%s)\x1B[0m\n", colour, dirEntry_name (entry), dirEntry_extension (entry));
+    time_t modificationTime = dirEntry_modificationTime (entry);
+    localtime_r (&modificationTime, &cal);
+    printf ("  %s(%d-%02d-%02d %02d:%02d:%02d) %s (%s) (%s)\x1B[0m\n", colour,
+                                                                       cal.tm_year + 1900,
+                                                                       cal.tm_mon + 1,
+                                                                       cal.tm_mday,
+                                                                       cal.tm_hour,
+                                                                       cal.tm_min,
+                                                                       cal.tm_sec,
+                                                                       dirEntry_name (entry),
+                                                                       dirEntry_extension (entry),
+                                                                       dirEntry_fullName (entry));
     entry = dirEntry_next (entry);
   }
   dirEntry_delete (entries);

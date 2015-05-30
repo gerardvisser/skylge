@@ -20,6 +20,8 @@
 #ifndef ___DIR_ENTRY_INCLUDED
 #define ___DIR_ENTRY_INCLUDED
 
+#include <time.h>
+
 typedef enum {
   FILE_TYPE_DIRECTORY,
   FILE_TYPE_REGULAR,
@@ -34,6 +36,8 @@ void        dirEntry_delete (dirEntry_t* this);
 const char* dirEntry_extension (dirEntry_t* this);
 fileType_t  dirEntry_fileType (dirEntry_t* this);
 dirEntry_t* dirEntry_firstEntry (dirEntry_t* this);
+const char* dirEntry_fullName (dirEntry_t* this);
+time_t      dirEntry_modificationTime (dirEntry_t* this);
 const char* dirEntry_name (dirEntry_t* this);
 int         dirEntry_nameLength (dirEntry_t* this);
 dirEntry_t* dirEntry_next (dirEntry_t* this);
