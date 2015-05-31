@@ -18,9 +18,9 @@ void printBoolOptie (char optkey, bool value) {
   printf ("%c: %s\n", optkey, value ? "true" : "false");
 }
 
-void printDirectory (const char* dirName) {
-  printf ("\nPrinting the contents of directory '%s':\n", dirName);
-  file_t* const entries = file_readDir (dirName);
+void printFileList (const char* filename) {
+  printf ("\nPrinting list for file or directory '%s':\n", filename);
+  file_t* const entries = file_new (filename);
   file_t* entry = entries;
   struct tm cal;
   while (entry != NULL) {
@@ -128,10 +128,10 @@ void testFile (int argc, char** args) {
   commandLineArgs_t* commandLineArgs = commandLineArgs_new (argc, args, NULL);
   stringList_t* mainArgs = commandLineArgs_getMainArgs (commandLineArgs);
   if (stringList_length (mainArgs) == 0) {
-    errors_printMessageAndExit ("At least one directory name expected");
+    errors_printMessageAndExit ("At least one filename expected");
   }
   while (stringList_length (mainArgs) > 0) {
-    printDirectory (mainArgs->value);
+    printFileList (mainArgs->value);
     mainArgs = mainArgs->next;
   }
   commandLineArgs_delete (commandLineArgs);

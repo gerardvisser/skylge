@@ -101,7 +101,7 @@ static DIR* openDirectory (const char* dirName) {
   return result;
 }
 
-static file_t* file_new (const char* fullName) {
+static file_t* file_allocAndInit (const char* fullName) {
   fileInfo_t fileInfo;
   getFileInfo (&fileInfo, fullName);
 
@@ -113,7 +113,12 @@ static file_t* file_new (const char* fullName) {
   result->fullName = fullNameCopy;
   result->fullNameLength = fullNameLength;
   result->fileType = fileInfo.fileType;
-  result->name = strrchr (fullNameCopy, '/') + 1;
+  result->name = strrchr (fullNameCopy, '/');
+  if (result->name == NULL) {
+    result->name = fullNameCopy;
+  } else {
+    ++result->name;
+  }
   result->nameLength = strlen (result->name);
   result->previous = NULL;
   result->next = NULL;
@@ -130,9 +135,9 @@ static file_t* file_new (const char* fullName) {
 
 static file_t* file_append (file_t* this, const char* fullName) {
   if (this == NULL) {
-    return file_new (fullName);
+    return file_allocAndInit (fullName);
   }
-  this->next = file_new (fullName);
+  this->next = file_allocAndInit (fullName);
   this->next->previous = this;
   return this->next;
 }
@@ -189,42 +194,54 @@ int file_nameLength (file_t* this) {
   return this->nameLength;
 }
 
+file_t* file_new (const char* filename) {
+  file_t* file = NULL;
+
+  fileInfo_t fileInfo;
+  getFileInfo (&fileInfo, filename);
+
+  switch (fileInfo.fileType) {
+  case FILE_TYPE_DIRECTORY: {
+    char* fullName = malloc (8192);
+    char* dirNameEnd = stpcpy (fullName, filename);
+    if (dirNameEnd == fullName) {
+      dirNameEnd = stpcpy (dirNameEnd, "./");
+    } else if (dirNameEnd[-1] != '/') {
+      dirNameEnd = stpcpy (dirNameEnd, "/");
+    }
+
+    DIR* dir = openDirectory (filename);
+    struct dirent* entry = readdir (dir);
+    while (entry != NULL) {
+      if (!(strcmp (entry->d_name, ".") == 0 | strcmp (entry->d_name, "..") == 0)) {
+        strcpy (dirNameEnd, entry->d_name);
+        file = file_append (file, fullName);
+      }
+      entry = readdir (dir);
+    }
+    closedir (dir);
+    free (fullName);
+    file = file_firstEntry (file);
+  } break;
+
+  case FILE_TYPE_REGULAR:
+    file = file_allocAndInit (filename);
+    break;
+
+  default:
+    errors_printMessageAndExit ("File '%s' is not a regular file or a directory", filename);
+    break;
+  }
+
+  return file;
+}
+
 file_t* file_next (file_t* this) {
   return this->next;
 }
 
 file_t* file_previous (file_t* this) {
   return this->previous;
-}
-
-file_t* file_readDir (const char* dirName) {
-  char* fullName = malloc (8192);
-  char* dirNameEnd = stpcpy (fullName, dirName);
-  if (dirNameEnd == fullName) {
-    dirNameEnd[0] = '.';
-    dirNameEnd[1] = '/';
-    dirNameEnd[2] = 0;
-    dirNameEnd += 2;
-  } else if (dirNameEnd[-1] != '/') {
-    dirNameEnd[0] = '/';
-    dirNameEnd[1] = 0;
-    ++dirNameEnd;
-  }
-
-  file_t* entryList = NULL;
-  DIR* dir = openDirectory (dirName);
-  struct dirent* entry = readdir (dir);
-  while (entry != NULL) {
-    if (!(strcmp (entry->d_name, ".") == 0 | strcmp (entry->d_name, "..") == 0)) {
-      strcpy (dirNameEnd, entry->d_name);
-      entryList = file_append (entryList, fullName);
-    }
-    entry = readdir (dir);
-  }
-  closedir (dir);
-  free (fullName);
-  entryList = file_firstEntry (entryList);
-  return entryList;
 }
 
 fileType_t file_type (file_t* this) {
