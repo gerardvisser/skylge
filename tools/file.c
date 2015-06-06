@@ -21,9 +21,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include "errors.h"
 #include "file.h"
+#include "fileInfo.h"
 
 struct file_struct {
   const char* name;
@@ -38,38 +38,10 @@ struct file_struct {
   int nameLength;
 };
 
-typedef struct {
-  time_t modificationTime;
-  fileType_t fileType;
-} fileInfo_t;
-
 static void getFileInfo (fileInfo_t* fileInfo, const char* filename) {
-  struct stat attrs;
-  if (lstat (filename, &attrs)) {
-    switch (errno) {
-    case EACCES:
-      errors_printMessageAndExit ("No permission to read file '%s'", filename);
-
-    case ENOENT:
-      errors_printMessageAndExit ("No file named '%s' exists", filename);
-
-    case ENOMEM:
-      errors_printMessageAndExit ("Not enough memory available to read the attributes of file '%s'", filename);
-
-    default:
-      errors_printMessageAndExit ("An unknown error occurred while trying to read the attributes of file '%s'", filename);
-    }
+  if (fileInfo_read (fileInfo, filename)) {
+    errors_printMessageAndExit ("No file named '%s' exists", filename);
   }
-  if (S_ISDIR (attrs.st_mode)) {
-    fileInfo->fileType = FILE_TYPE_DIRECTORY;
-  } else if (S_ISREG (attrs.st_mode)) {
-    fileInfo->fileType = FILE_TYPE_REGULAR;
-  } else if (S_ISLNK (attrs.st_mode)) {
-    fileInfo->fileType = FILE_TYPE_SYMLINK;
-  } else {
-    fileInfo->fileType = FILE_TYPE_UNKNOWN;
-  }
-  fileInfo->modificationTime = attrs.st_mtime;
 }
 
 static DIR* openDirectory (const char* dirName) {
@@ -133,13 +105,37 @@ static file_t* file_allocAndInit (const char* fullName) {
   return result;
 }
 
-static file_t* file_append (file_t* this, const char* fullName) {
-  if (this == NULL) {
-    return file_allocAndInit (fullName);
+static file_t* file_copy (file_t* this) {
+  file_t* result = malloc (sizeof (file_t));
+  char* fullNameCopy = malloc (this->fullNameLength + 1);
+  strcpy (fullNameCopy, this->fullName);
+
+  result->name = fullNameCopy + this->fullNameLength - this->nameLength;
+  result->fullName = fullNameCopy;
+  result->extension = fullNameCopy + this->fullNameLength - this->extensionLength;
+  result->next = NULL;
+  result->previous = NULL;
+  result->modificationTime = this->modificationTime;
+  result->fileType = this->fileType;
+  result->extensionLength = this->extensionLength;
+  result->fullNameLength = this->fullNameLength;
+  result->nameLength = this->nameLength;
+  return result;
+}
+
+file_t* file_append (file_t* this, file_t* file) {
+  if (!(file->previous == NULL & file->next == NULL)) {
+    file = file_copy (file);
   }
-  this->next = file_allocAndInit (fullName);
-  this->next->previous = this;
-  return this->next;
+  if (this == NULL) {
+    return file;
+  }
+  if (this->next != NULL) {
+    errors_printMessageAndExit ("\x1B[7mCan only append to the end of a list\x1B[27m");
+  }
+  this->next = file;
+  file->previous = this;
+  return file;
 }
 
 void file_delete (file_t* this) {
@@ -215,7 +211,7 @@ file_t* file_new (const char* filename) {
     while (entry != NULL) {
       if (!(strcmp (entry->d_name, ".") == 0 | strcmp (entry->d_name, "..") == 0)) {
         strcpy (dirNameEnd, entry->d_name);
-        file = file_append (file, fullName);
+        file = file_append (file, file_allocAndInit (fullName));
       }
       entry = readdir (dir);
     }

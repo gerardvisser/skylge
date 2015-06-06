@@ -1,11 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include "commandLineArgs.h"
 #include "file.h"
+#include "fileInfo.h"
 
 void testCommandLineArgs (int argc, char** args);
 void testFile (int argc, char** args);
+void testFileInfo (int argc, char** args);
+void testFileSublist (void);
 void testStringList (void);
 
 int main (int argc, char** args, char** env) {
@@ -18,9 +22,19 @@ void printBoolOptie (char optkey, bool value) {
   printf ("%c: %s\n", optkey, value ? "true" : "false");
 }
 
-void printFileList (const char* filename) {
-  printf ("\nPrinting list for file or directory '%s':\n", filename);
-  file_t* const entries = file_new (filename);
+void printDate (time_t time) {
+  struct tm cal;
+  localtime_r (&time, &cal);
+  printf ("%d-%02d-%02d %02d:%02d:%02d", cal.tm_year + 1900,
+                                         cal.tm_mon + 1,
+                                         cal.tm_mday,
+                                         cal.tm_hour,
+                                         cal.tm_min,
+                                         cal.tm_sec);
+}
+
+/* Deletes the list after printing. */
+void printFileList (file_t* const entries) {
   file_t* entry = entries;
   struct tm cal;
   while (entry != NULL) {
@@ -37,18 +51,9 @@ void printFileList (const char* filename) {
     default:
       colour = "\x1B[0m";
     }
-    time_t modificationTime = file_modificationTime (entry);
-    localtime_r (&modificationTime, &cal);
-    printf ("  %s(%d-%02d-%02d %02d:%02d:%02d) %s (%s) (%s)\x1B[0m\n", colour,
-                                                                       cal.tm_year + 1900,
-                                                                       cal.tm_mon + 1,
-                                                                       cal.tm_mday,
-                                                                       cal.tm_hour,
-                                                                       cal.tm_min,
-                                                                       cal.tm_sec,
-                                                                       file_name (entry),
-                                                                       file_extension (entry),
-                                                                       file_fullName (entry));
+    printf ("  %s(", colour);
+    printDate (file_modificationTime (entry));
+    printf (") %s (%s) (%s)\x1B[0m\n", colour, file_name (entry), file_extension (entry), file_fullName (entry));
     entry = file_next (entry);
   }
   file_delete (entries);
@@ -131,10 +136,60 @@ void testFile (int argc, char** args) {
     errors_printMessageAndExit ("At least one filename expected");
   }
   while (stringList_length (mainArgs) > 0) {
-    printFileList (mainArgs->value);
+    printf ("\nPrinting list for file or directory '%s':\n", mainArgs->value);
+    printFileList (file_new (mainArgs->value));
     mainArgs = mainArgs->next;
   }
   commandLineArgs_delete (commandLineArgs);
+}
+
+void testFileSublist (void) {
+  file_t* const wd = file_new (".");
+  file_t* cfiles = NULL;
+  file_t* file = wd;
+  while (file != NULL) {
+    if (strcmp (file_extension (file), "c") == 0) {
+      cfiles = file_append (cfiles, file);
+    }
+    file = file_next (file);
+  }
+  file_delete (wd);
+
+  cfiles = file_firstEntry (cfiles);
+  printf ("\nPrinting list of c-files in working directory:\n");
+  printFileList (cfiles);
+}
+
+void testFileInfo (int argc, char** args) {
+  int i;
+  fileInfo_t info;
+  for (i = 1; i < argc; ++i) {
+    printf ("%s: ", args[i]);
+    if (!fileInfo_read (&info, args[i])) {
+      printf ("\x1B[7msize:\x1B[27m %ld byte(s), \x1B[7mlast modification:\x1B[27m ", info.size);
+      printDate (info.modificationTime);
+      printf (", \x1B[7mtype:\x1B[27m ");
+      switch (info.fileType) {
+      case FILE_TYPE_DIRECTORY:
+        printf ("directory\n");
+        break;
+
+      case FILE_TYPE_REGULAR:
+        printf ("regular\n");
+        break;
+
+      case FILE_TYPE_SYMLINK:
+        printf ("symbolic link\n");
+        break;
+
+      default:
+        printf ("unknown\n");
+        break;
+      }
+    } else {
+      printf ("file does not exist\n");
+    }
+  }
 }
 
 void testStringList (void) {

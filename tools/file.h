@@ -21,17 +21,12 @@
 #define ___FILE_INCLUDED
 
 #include <time.h>
-
-typedef enum {
-  FILE_TYPE_DIRECTORY,
-  FILE_TYPE_REGULAR,
-  FILE_TYPE_SYMLINK,
-  FILE_TYPE_UNKNOWN
-} fileType_t;
+#include "fileType.h"
 
 struct file_struct;
 typedef struct file_struct file_t;
 
+file_t*     file_append (file_t* this, file_t* file);
 void        file_delete (file_t* this);
 const char* file_extension (file_t* this);
 int         file_extensionLength (file_t* this);
