@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ___ERRORS_INCLUDED
-#define ___ERRORS_INCLUDED
+#ifndef ERRORS_INCLUDED
+#define ERRORS_INCLUDED
 
 void errors_printMessageAndExit (const char* templ, ...);
 

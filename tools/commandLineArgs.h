@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ___COMMAND_LINE_ARGS_INCLUDED
-#define ___COMMAND_LINE_ARGS_INCLUDED
+#ifndef COMMAND_LINE_ARGS_INCLUDED
+#define COMMAND_LINE_ARGS_INCLUDED
 
 #include <stdbool.h>
 #include "stringList.h"

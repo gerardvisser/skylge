@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ___FILE_INFO_INCLUDED
-#define ___FILE_INFO_INCLUDED
+#ifndef FILE_INFO_INCLUDED
+#define FILE_INFO_INCLUDED
 
 #include <time.h>
 #include "fileType.h"

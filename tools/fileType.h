@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ___FILE_TYPE_INCLUDED
-#define ___FILE_TYPE_INCLUDED
+#ifndef FILE_TYPE_INCLUDED
+#define FILE_TYPE_INCLUDED
 
 typedef enum {
   FILE_TYPE_DIRECTORY,

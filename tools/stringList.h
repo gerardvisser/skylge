@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ___STRING_LIST_INCLUDED
-#define ___STRING_LIST_INCLUDED
+#ifndef STRING_LIST_INCLUDED
+#define STRING_LIST_INCLUDED
 
 typedef struct stringList_struct stringList_t;
 
