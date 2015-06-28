@@ -25,22 +25,11 @@
 struct buildfile_struct;
 typedef struct buildfile_struct buildfile_t;
 
+int          buildfile_argCount (buildfile_t* this);
+char**       buildfile_arguments (buildfile_t* this);
 void         buildfile_delete (buildfile_t* this);
+const char*  buildfile_dirName (buildfile_t* this);
+int          buildfile_dirNameLength (buildfile_t* this);
 buildfile_t* buildfile_new (const char* filename);
-
-/*
-struct commandLineArgs_option_struct;
-typedef struct commandLineArgs_option_struct commandLineArgs_option_t;
-
-void                      commandLineArgs_delete (commandLineArgs_t* this);
-bool                      commandLineArgs_getBoolOptionValue (commandLineArgs_t* this, char optKey);
-stringList_t*             commandLineArgs_getMainArgs (commandLineArgs_t* this);
-stringList_t*             commandLineArgs_getStringOptionValue (commandLineArgs_t* this, char optKey);
-commandLineArgs_t*        commandLineArgs_new (int argc, char** args, ...);
-
-void                      commandLineArgs_option_delete (commandLineArgs_option_t* this);
-commandLineArgs_option_t* commandLineArgs_option_newBoolOption (char key);
-commandLineArgs_option_t* commandLineArgs_option_newStringOption (char key, const char* defaultValue);
-*/
 
 #endif

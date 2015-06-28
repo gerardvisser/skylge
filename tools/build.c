@@ -17,18 +17,22 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "buildfile.h"
 #include "commandLineArgs.h"
 #include "errors.h"
 #include "file.h"
 #include "fileInfo.h"
 
-#define DEFAULT_CONFIG_FILE "buildfile"
-#define PROGRAMME_NAME      "build"
-#define PROGRAMME_VERSION   "2.0-SNAPSHOT"
+#define PROGRAMME_NAME    "build"
+#define PROGRAMME_VERSION "2.0-SNAPSHOT"
+
+#define freeIfNecessary(pointer) \
+  if (pointer != NULL) { \
+    free ((void*) pointer); \
+  }
 
 typedef struct {
   stringList_t* files;
@@ -43,29 +47,46 @@ typedef struct {
   const char* exeName;
 } buildConfig_t;
 
-static commandLineArgs_t* getBuildFileArgs (stringList_t* buildfilenames);
-static commandLineArgs_t* getCommandLineArgs (int argc, char** args);
+static void deleteBuildConfig (buildConfig_t* config);
+static void initBuildConfig (buildConfig_t* config, int argc, char** args);
 static void printVersionOrHelpIfRequired (int argc, char** args);
 
 int main (int argc, char** args, char** env) {
   printVersionOrHelpIfRequired (argc, args);
-  commandLineArgs_t* commandLineArgs = getCommandLineArgs (argc - 1, args + 1);
-  commandLineArgs_t* buildFileArgs = getBuildFileArgs (commandLineArgs_getStringOptionValue (commandLineArgs, 'b'));
 
   buildConfig_t config;
+  initBuildConfig (&config, argc, args);
 
-  commandLineArgs_delete (commandLineArgs);
-  if (buildFileArgs != NULL) {
-    commandLineArgs_delete (buildFileArgs);
-  }
+
+  deleteBuildConfig (&config);
 
   return 0;
+}
+
+static void deleteBuildConfig (buildConfig_t* config) {
+  stringList_delete (config->files);
+  stringList_delete (config->macros);
+  stringList_delete (config->libraries);
+  stringList_delete (config->libSearchPath);
+  stringList_delete (config->includeSearchPath);
+  freeIfNecessary (config->optimizationLevel);
+  freeIfNecessary (config->objsDirectory);
+  freeIfNecessary (config->libVersion);
+  freeIfNecessary (config->libName);
+  freeIfNecessary (config->exeName);
+}
+
+static buildfile_t* getBuildFile (stringList_t* buildfilenames) {
+  if (stringList_length (buildfilenames) > 1) {
+    errors_printMessageAndExit ("Only one buildfile can be specified");
+  }
+  return buildfile_new (buildfilenames->value);
 }
 
 static commandLineArgs_t* getCommandLineArgs (int argc, char** args) {
   commandLineArgs_t* commandLineArgs = commandLineArgs_new (argc, args, commandLineArgs_option_newBoolOption ('c'),
                                                                         commandLineArgs_option_newStringOption ('a', NULL),
-                                                                        commandLineArgs_option_newStringOption ('b', DEFAULT_CONFIG_FILE),
+                                                                        commandLineArgs_option_newStringOption ('b', BUILDFILE_DEFAULT_NAME),
                                                                         commandLineArgs_option_newStringOption ('D', NULL),
                                                                         commandLineArgs_option_newStringOption ('I', NULL),
                                                                         commandLineArgs_option_newStringOption ('L', NULL),
@@ -76,6 +97,42 @@ static commandLineArgs_t* getCommandLineArgs (int argc, char** args) {
                                                                         commandLineArgs_option_newStringOption ('x', NULL),
                                                                         NULL);
   return commandLineArgs;
+}
+
+static void initBuildConfig (buildConfig_t* config, int argc, char** args) {
+  commandLineArgs_t* commandLineArgs = getCommandLineArgs (argc - 1, args + 1);
+  buildfile_t* buildFile = getBuildFile (commandLineArgs_getStringOptionValue (commandLineArgs, 'b'));
+  commandLineArgs_t* buildFileArgs = NULL;
+  if (buildFile != NULL) {
+    buildFileArgs = getCommandLineArgs (buildfile_argCount (buildFile), buildfile_arguments (buildFile));
+  }
+  memset (config, 0, sizeof (buildConfig_t));
+
+  int dirNameLength;
+  const char* dirName;
+
+  /* Files defined at the commandline override files defined in the buildfile. */
+  stringList_t* list = commandLineArgs_getMainArgs (commandLineArgs);
+  if (list == NULL & buildFileArgs != NULL) {
+    list = commandLineArgs_getMainArgs (buildFileArgs);
+    dirName = buildfile_dirName (buildFile);
+    dirNameLength = buildfile_dirNameLength (buildFile);
+    /* Here, inhibit -a or -x from buildfile. */
+  } else {
+    dirName = "";
+    dirNameLength = 0;
+  }
+  if (list == NULL) {
+    errors_printMessageAndExit ("No input files");
+  }
+
+
+
+  commandLineArgs_delete (commandLineArgs);
+  if (buildFile != NULL) {
+    commandLineArgs_delete (buildFileArgs);
+    buildfile_delete (buildFile);
+  }
 }
 
 static void printHelp (void) {
@@ -120,103 +177,4 @@ static void printVersionOrHelpIfRequired (int argc, char** args) {
       printVersion ();
     }
   }
-}
-
-/******************************************************************************/
-/****************   B U I L D   F I L E   A R G U M E N T S   *****************/
-/******************************************************************************/
-
-static int getArgCount (const char* argsBuffer);
-static char* nextArg (const char* argsBuffer);
-static int skipComment (const char* argsBuffer, int index);
-
-static void createArgsArray (int* argc, char*** args, char* argsBuffer) {
-  *argc = getArgCount (argsBuffer);
-  *args = malloc (sizeof (void*) * (*argc + 1));
-  *args[*argc] = NULL;
-  int i = 0;
-  argsBuffer = nextArg (argsBuffer);
-  while (*argsBuffer != '0') {
-    (*args)[i] = argsBuffer;
-    while (!(isspace (*argsBuffer) | *argsBuffer == 0)) {
-      ++argsBuffer;
-    }
-    char* argEnd = argsBuffer;
-    argsBuffer = nextArg (argsBuffer);
-    *argEnd = 0;
-    ++i;
-  }
-}
-
-static int getArgCount (const char* argsBuffer) {
-  int result = 0;
-  argsBuffer = nextArg (argsBuffer);
-  while (*argsBuffer != '0') {
-    while (!(isspace (*argsBuffer) | *argsBuffer == 0)) {
-      ++argsBuffer;
-    }
-    argsBuffer = nextArg (argsBuffer);
-    ++result;
-  }
-  return result;
-}
-
-/* Returns NULL if no extra arguments are found. */
-static commandLineArgs_t* getBuildFileArgs (stringList_t* buildfilenames) {
-  if (stringList_length (buildfilenames) > 1) {
-    errors_printMessageAndExit ("Only one buildfile can be specified");
-  }
-  fileInfo_t fileInfo;
-  if (fileInfo_read (&fileInfo, buildfilenames->value) == 0) {
-    if (fileInfo.fileType != FILE_TYPE_REGULAR) {
-      errors_printMessageAndExit ("'%s' is not a regular file", buildfilenames->value);
-    }
-    if (fileInfo.size == 0) {
-      return NULL;
-    }
-
-    char* argsBuffer = malloc (fileInfo.size + 1);
-    /* What if no permission to read this file? */
-    FILE* handle = fopen (buildfilenames->value, "rb");
-    fread (argsBuffer, 1, fileInfo.size, handle);
-    fclose (handle);
-    argsBuffer[fileInfo.size] = 0;
-
-    int argc;
-    char** args;
-    createArgsArray (&argc, &args, argsBuffer);
-
-    commandLineArgs_t* commandLineArgs = NULL;
-    if (argc > 0) {
-      commandLineArgs = getCommandLineArgs (argc, args);
-    }
-
-    free (args);
-    free (argsBuffer);
-    return commandLineArgs;
-  } else if (strcmp (buildfilenames->value, DEFAULT_CONFIG_FILE) == 0) {
-    return NULL;
-  } else {
-    errors_printMessageAndExit ("No file named '%s' exists", buildfilenames->value);
-  }
-}
-
-static char* nextArg (const char* argsBuffer) {
-  int i = skipComment (argsBuffer, 0);
-  while (isspace (argsBuffer[i])) {
-    while (isspace (argsBuffer[i])) {
-      ++i;
-    }
-    i = skipComment (argsBuffer, i);
-  }
-  return (char*) argsBuffer + i;
-}
-
-static int skipComment (const char* argsBuffer, int index) {
-  if (argsBuffer[index] == '#') {
-    while (!(argsBuffer[index] == '\n' | argsBuffer[index] == 0)) {
-      ++index;
-    }
-  }
-  return index;
 }
