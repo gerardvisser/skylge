@@ -53,7 +53,7 @@ void printFileList (file_t* const entries) {
     }
     printf ("  %s(", colour);
     printDate (file_modificationTime (entry));
-    printf (") %s (%s) (%s)\x1B[0m\n", colour, file_name (entry), file_extension (entry), file_fullName (entry));
+    printf (") %s (%s) (%s)\x1B[0m\n", file_name (entry), file_extension (entry), file_fullName (entry));
     entry = file_next (entry);
   }
   file_delete (entries);
@@ -93,6 +93,8 @@ void printStringOptie (char optkey, stringList_t* values) {
 }
 
 void testCommandLineArgs (int argc, char** args) {
+  --argc;
+  ++args;
   commandLineArgs_t* commandLineArgs = commandLineArgs_new (argc, args, commandLineArgs_option_newBoolOption ('a'),
                                                                         commandLineArgs_option_newBoolOption ('b'),
                                                                         commandLineArgs_option_newBoolOption ('c'),
@@ -130,7 +132,7 @@ void testCommandLineArgs (int argc, char** args) {
 }
 
 void testFile (int argc, char** args) {
-  commandLineArgs_t* commandLineArgs = commandLineArgs_new (argc, args, NULL);
+  commandLineArgs_t* commandLineArgs = commandLineArgs_new (argc - 1, args + 1, NULL);
   stringList_t* mainArgs = commandLineArgs_getMainArgs (commandLineArgs);
   if (stringList_length (mainArgs) == 0) {
     errors_printMessageAndExit ("At least one filename expected");

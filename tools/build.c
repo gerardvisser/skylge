@@ -49,7 +49,7 @@ static void printVersionOrHelpIfRequired (int argc, char** args);
 
 int main (int argc, char** args, char** env) {
   printVersionOrHelpIfRequired (argc, args);
-  commandLineArgs_t* commandLineArgs = getCommandLineArgs (argc, args);
+  commandLineArgs_t* commandLineArgs = getCommandLineArgs (argc - 1, args + 1);
   commandLineArgs_t* buildFileArgs = getBuildFileArgs (commandLineArgs_getStringOptionValue (commandLineArgs, 'b'));
 
   buildConfig_t config;
@@ -187,8 +187,8 @@ static commandLineArgs_t* getBuildFileArgs (stringList_t* buildfilenames) {
     createArgsArray (&argc, &args, argsBuffer);
 
     commandLineArgs_t* commandLineArgs = NULL;
-    if (argc > 1) {
-      /* Make sure first argument is dummy!!! */
+    if (argc > 0) {
+      commandLineArgs = getCommandLineArgs (argc, args);
     }
 
     free (args);

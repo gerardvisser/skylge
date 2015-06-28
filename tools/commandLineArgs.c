@@ -138,7 +138,7 @@ commandLineArgs_t* commandLineArgs_new (int argc, char** args, ...) {
   }
   va_end (argp);
 
-  int i = 1;
+  int i = 0;
   while (i < argc) {
     if (args[i][0] == '-') {
       if (args[i][1] != 0) {
