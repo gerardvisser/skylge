@@ -37,6 +37,7 @@ public:
   void unref (void);
 
 #ifdef DEBUG_MODE
+  void externalize (void);
   void internalize (void);
   unsigned long int refCount (void);
   unsigned long int refCountInternal (void);
@@ -56,8 +57,10 @@ public:
 };
 
 #ifdef DEBUG_MODE
+#define EXTERNALIZE(obj) obj->externalize ()
 #define INTERNALIZE(obj) obj->internalize ()
 #else
+#define EXTERNALIZE(obj)
 #define INTERNALIZE(obj)
 #endif
 
