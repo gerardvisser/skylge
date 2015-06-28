@@ -19,120 +19,27 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include "buildfile.h"
-#include "commandLineArgs.h"
+#include "buildConfig.h"
+/*
 #include "errors.h"
 #include "file.h"
 #include "fileInfo.h"
+*/
 
 #define PROGRAMME_NAME    "build"
 #define PROGRAMME_VERSION "2.0-SNAPSHOT"
 
-#define freeIfNecessary(pointer) \
-  if (pointer != NULL) { \
-    free ((void*) pointer); \
-  }
-
-typedef struct {
-  stringList_t* files;
-  stringList_t* macros;
-  stringList_t* libraries;
-  stringList_t* libSearchPath;
-  stringList_t* includeSearchPath;
-  const char* optimizationLevel;
-  const char* objsDirectory;
-  const char* libVersion;
-  const char* libName;
-  const char* exeName;
-} buildConfig_t;
-
-static void deleteBuildConfig (buildConfig_t* config);
-static void initBuildConfig (buildConfig_t* config, int argc, char** args);
 static void printVersionOrHelpIfRequired (int argc, char** args);
 
 int main (int argc, char** args, char** env) {
   printVersionOrHelpIfRequired (argc, args);
 
-  buildConfig_t config;
-  initBuildConfig (&config, argc, args);
+  buildConfig_t* config = buildConfig_new (argc, args);
 
 
-  deleteBuildConfig (&config);
+  buildConfig_delete (config);
 
   return 0;
-}
-
-static void deleteBuildConfig (buildConfig_t* config) {
-  stringList_delete (config->files);
-  stringList_delete (config->macros);
-  stringList_delete (config->libraries);
-  stringList_delete (config->libSearchPath);
-  stringList_delete (config->includeSearchPath);
-  freeIfNecessary (config->optimizationLevel);
-  freeIfNecessary (config->objsDirectory);
-  freeIfNecessary (config->libVersion);
-  freeIfNecessary (config->libName);
-  freeIfNecessary (config->exeName);
-}
-
-static buildfile_t* getBuildFile (stringList_t* buildfilenames) {
-  if (stringList_length (buildfilenames) > 1) {
-    errors_printMessageAndExit ("Only one buildfile can be specified");
-  }
-  return buildfile_new (buildfilenames->value);
-}
-
-static commandLineArgs_t* getCommandLineArgs (int argc, char** args) {
-  commandLineArgs_t* commandLineArgs = commandLineArgs_new (argc, args, commandLineArgs_option_newBoolOption ('c'),
-                                                                        commandLineArgs_option_newStringOption ('a', NULL),
-                                                                        commandLineArgs_option_newStringOption ('b', BUILDFILE_DEFAULT_NAME),
-                                                                        commandLineArgs_option_newStringOption ('D', NULL),
-                                                                        commandLineArgs_option_newStringOption ('I', NULL),
-                                                                        commandLineArgs_option_newStringOption ('L', NULL),
-                                                                        commandLineArgs_option_newStringOption ('l', NULL),
-                                                                        commandLineArgs_option_newStringOption ('O', NULL),
-                                                                        commandLineArgs_option_newStringOption ('o', "objs"),
-                                                                        commandLineArgs_option_newStringOption ('V', NULL),
-                                                                        commandLineArgs_option_newStringOption ('x', NULL),
-                                                                        NULL);
-  return commandLineArgs;
-}
-
-static void initBuildConfig (buildConfig_t* config, int argc, char** args) {
-  commandLineArgs_t* commandLineArgs = getCommandLineArgs (argc - 1, args + 1);
-  buildfile_t* buildFile = getBuildFile (commandLineArgs_getStringOptionValue (commandLineArgs, 'b'));
-  commandLineArgs_t* buildFileArgs = NULL;
-  if (buildFile != NULL) {
-    buildFileArgs = getCommandLineArgs (buildfile_argCount (buildFile), buildfile_arguments (buildFile));
-  }
-  memset (config, 0, sizeof (buildConfig_t));
-
-  int dirNameLength;
-  const char* dirName;
-
-  /* Files defined at the commandline override files defined in the buildfile. */
-  stringList_t* list = commandLineArgs_getMainArgs (commandLineArgs);
-  if (list == NULL & buildFileArgs != NULL) {
-    list = commandLineArgs_getMainArgs (buildFileArgs);
-    dirName = buildfile_dirName (buildFile);
-    dirNameLength = buildfile_dirNameLength (buildFile);
-    /* Here, inhibit -a or -x from buildfile. */
-  } else {
-    dirName = "";
-    dirNameLength = 0;
-  }
-  if (list == NULL) {
-    errors_printMessageAndExit ("No input files");
-  }
-
-
-
-  commandLineArgs_delete (commandLineArgs);
-  if (buildFile != NULL) {
-    commandLineArgs_delete (buildFileArgs);
-    buildfile_delete (buildFile);
-  }
 }
 
 static void printHelp (void) {
