@@ -30,6 +30,6 @@ void stringBuilder_clear (stringBuilder_t* this);
 void stringBuilder_delete (stringBuilder_t* this);
 int stringBuilder_length (stringBuilder_t* this);
 stringBuilder_t* stringBuilder_new (int initialCapacity);
-const char* stringBuilder_toString (stringBuilder_t* this);
+char* stringBuilder_toString (stringBuilder_t* this);
 
 #endif

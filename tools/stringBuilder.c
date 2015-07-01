@@ -82,7 +82,7 @@ stringBuilder_t* stringBuilder_new (int initialCapacity) {
   return result;
 }
 
-const char* stringBuilder_toString (stringBuilder_t* this) {
+char* stringBuilder_toString (stringBuilder_t* this) {
   char* result = malloc (this->length + 1);
   memcpy (result, this->buffer, this->length);
   result[this->length] = 0;
