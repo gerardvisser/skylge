@@ -75,7 +75,8 @@ stringList_t* stringList_new (const char* value) {
   const int len = strlen (value);
   stringList_t* result = malloc (sizeof (stringList_t));
   char* valueCopy = malloc (len + 1);
-  strcpy (valueCopy, value);
+  memcpy (valueCopy, value, len + 1);
+  result->valueLength = len;
   result->value = valueCopy;
   result->previous = NULL;
   result->next = NULL;

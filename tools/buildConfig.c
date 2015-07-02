@@ -135,7 +135,7 @@ static const char* getExeName (commandLineArgs_t* commandLineArgs, commandLineAr
     if (stringList_length (list) > 1) {
       errors_printMessageAndExit ("Only one executable target can be specified");
     }
-    int len = strlen (list->value) + 1;
+    int len = list->valueLength + 1;
     char* result = malloc (dirNameLength + len);
     memcpy (result, dirName, dirNameLength);
     memcpy (result + dirNameLength, list->value, len);
@@ -167,7 +167,7 @@ static stringList_t* getFiles (bool* inhibitAorXfromBuildfile, commandLineArgs_t
   stringList_t* result = NULL;
 
   while (list != NULL) {
-    int len = strlen (list->value) + 1;
+    int len = list->valueLength + 1;
     char* name = dirNameLength + len > BUFFER_SIZE ? malloc (dirNameLength + len) : buf;
     //mempcpy (mempcpy (name, dirName, dirNameLength), list->value, len);
     memcpy (name, dirName, dirNameLength);
@@ -184,7 +184,7 @@ static stringList_t* getFiles (bool* inhibitAorXfromBuildfile, commandLineArgs_t
 }
 
 static stringList_t* getIncludeSearchPath (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile) {
-  /* TODO: implementeren. Eigenlijk moet je hier alles al aan elkaar plakken en const char* teruggeven.  */
+  /* TODO: implementeren. */
 
   stringList_t* result = NULL;
   stringList_t* list = commandLineArgs_getStringOptionValue (commandLineArgs, 'I');
@@ -213,7 +213,7 @@ static const char* getLibName (commandLineArgs_t* commandLineArgs, commandLineAr
     if (stringList_length (list) > 1) {
       errors_printMessageAndExit ("Only one archive target can be specified");
     }
-    int len = strlen (list->value) + 1;
+    int len = list->valueLength + 1;
     char* result = malloc (len);
     memcpy (result, list->value, len);
     return result;
@@ -233,16 +233,18 @@ static const char* getObjsDirectory (commandLineArgs_t* commandLineArgs, command
     dirNameLength = 0;
     dirName = "";
   }
+  int len;
   const char* name;
   if (list != NULL) {
     if (stringList_length (list) > 1) {
       errors_printMessageAndExit ("Only one object file destination can be specified");
     }
     name = list->value;
+    len = list->valueLength + 1;
   } else {
     name = "objs";
+    len = 5;
   }
-  int len = strlen (name) + 1;
   char* result = malloc (dirNameLength + len);
   memcpy (result, dirName, dirNameLength);
   memcpy (result + dirNameLength, name, len);

@@ -26,6 +26,7 @@ struct stringList_struct {
   const char* value;
   stringList_t* next;
   stringList_t* previous;
+  int valueLength;
 };
 
 stringList_t* stringList_append (stringList_t* this, const char* value);
