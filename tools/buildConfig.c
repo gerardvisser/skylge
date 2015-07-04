@@ -24,8 +24,6 @@
 #include "commandLineArgs.h"
 #include "errors.h"
 
-#    include <stdio.h>
-
 #define BUFFER_SIZE 256
 
 #define freeIfNecessary(pointer) \
