@@ -216,7 +216,6 @@ static stringList_t* getFiles (bool* inhibitAorXfromBuildfile, commandLineArgs_t
     list = commandLineArgs_getMainArgs (buildFileArgs);
     dirName = buildfile_dirName (buildFile);
     dirNameLength = buildfile_dirNameLength (buildFile);
-    /* Here, inhibit -a or -x from buildfile. */
   } else {
     dirName = "";
     dirNameLength = 0;
