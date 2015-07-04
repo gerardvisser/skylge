@@ -24,6 +24,8 @@
 #include "commandLineArgs.h"
 #include "errors.h"
 
+#    include <stdio.h>
+
 #define BUFFER_SIZE 256
 
 #define freeIfNecessary(pointer) \
@@ -31,13 +33,16 @@
     free ((void*) pointer); \
   }
 
+static bool getBoolOption (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, char option);
 static buildfile_t* getBuildFile (stringList_t* buildfilenames);
 static commandLineArgs_t* getCommandLineArgs (int argc, char** args);
+static const char* getDestinationDirectory (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, char option);
 static const char* getExeName (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, bool inhibitAorXfromBuildfile);
 static stringList_t* getFiles (bool* inhibitAorXfromBuildfile, commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile);
-static stringList_t* getIncludeSearchPath (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile);
 static const char* getLibName (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, bool inhibitAorXfromBuildfile);
-static const char* getObjsDirectory (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile);
+static const char* getLibVersion (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs);
+static stringList_t* getMacrosOrLibraries (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, char option);
+static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, char inclOrLib);
 
 void buildConfig_delete (buildConfig_t* this) {
   stringList_delete (this->files);
@@ -47,6 +52,7 @@ void buildConfig_delete (buildConfig_t* this) {
   stringList_delete (this->includeSearchPath);
   freeIfNecessary (this->optimizationLevel);
   freeIfNecessary (this->objsDirectory);
+  freeIfNecessary (this->libDirectory);
   freeIfNecessary (this->libVersion);
   freeIfNecessary (this->libName);
   freeIfNecessary (this->exeName);
@@ -55,16 +61,18 @@ void buildConfig_delete (buildConfig_t* this) {
 
 /*
 typedef struct {
-  stringList_t* files;
-  stringList_t* macros;
-  stringList_t* libraries;
-  stringList_t* libSearchPath;
-  stringList_t* includeSearchPath;
+.  stringList_t* files;
+.  stringList_t* macros;
+.  stringList_t* libraries;
+.  stringList_t* libSearchPath;
+.  stringList_t* includeSearchPath;
   const char* optimizationLevel;
-  const char* objsDirectory;
-  const char* libVersion;
-  const char* libName;
-  const char* exeName;
+.  const char* objsDirectory;
+.  const char* libDirectory;
+.  const char* libVersion;
+.  const char* libName;
+.  const char* exeName;
+.  bool clean;
 } buildConfig_t;
 */
 buildConfig_t* buildConfig_new (int argc, char** args) {
@@ -85,13 +93,30 @@ buildConfig_t* buildConfig_new (int argc, char** args) {
   if (!(result->exeName == NULL | result->libName == NULL)) {
     errors_printMessageAndExit ("Should an archive or an executable be created (cannot create both)?");
   }
-  result->objsDirectory = getObjsDirectory (commandLineArgs, buildFileArgs, buildFile);
-
+  result->clean = getBoolOption (commandLineArgs, buildFileArgs, 'c');
+  result->macros = getMacrosOrLibraries (commandLineArgs, buildFileArgs, 'D');
+  result->objsDirectory = getDestinationDirectory (commandLineArgs, buildFileArgs, buildFile, 'o');
+  result->includeSearchPath = getSearchPath (commandLineArgs, buildFileArgs, buildFile, 'I');
+  if (result->exeName != NULL) {
+    result->libSearchPath = getSearchPath (commandLineArgs, buildFileArgs, buildFile, 'L');
+    result->libraries = getMacrosOrLibraries (commandLineArgs, buildFileArgs, 'l');
+  } else if (result->libName != NULL) {
+    result->libDirectory = getDestinationDirectory (commandLineArgs, buildFileArgs, buildFile, 'L');
+    result->libVersion = getLibVersion (commandLineArgs, buildFileArgs);
+  }
 
   commandLineArgs_delete (commandLineArgs);
   if (buildFile != NULL) {
     commandLineArgs_delete (buildFileArgs);
     buildfile_delete (buildFile);
+  }
+  return result;
+}
+
+static bool getBoolOption (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, char option) {
+  bool result = commandLineArgs_getBoolOptionValue (commandLineArgs, option);
+  if (!(result | buildFileArgs == NULL)) {
+    result = commandLineArgs_getBoolOptionValue (buildFileArgs, option);
   }
   return result;
 }
@@ -117,6 +142,43 @@ static commandLineArgs_t* getCommandLineArgs (int argc, char** args) {
                                                                         commandLineArgs_option_newStringOption ('x', NULL),
                                                                         NULL);
   return commandLineArgs;
+}
+
+static const char* getDestinationDirectory (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, char option) {
+  int dirNameLength;
+  const char* dirName;
+  stringList_t* list = commandLineArgs_getStringOptionValue (commandLineArgs, option);
+  if (list == NULL & buildFileArgs != NULL) {
+    list = commandLineArgs_getStringOptionValue (buildFileArgs, option);
+    dirNameLength = buildfile_dirNameLength (buildFile);
+    dirName = buildfile_dirName (buildFile);
+  } else {
+    dirNameLength = 0;
+    dirName = "";
+  }
+  int len;
+  const char* name;
+  if (list != NULL) {
+    if (stringList_length (list) > 1) {
+      if (option == 'o') {
+        errors_printMessageAndExit ("Only one object file destination can be specified");
+      } else {
+        errors_printMessageAndExit ("Only one archive destination can be specified");
+      }
+    }
+    name = list->value;
+    len = list->valueLength + 1;
+  } else if (option == 'o') {
+    name = "objs";
+    len = 5;
+  } else {
+    name = "lib";
+    len = 4;
+  }
+  char* result = malloc (dirNameLength + len);
+  memcpy (result, dirName, dirNameLength);
+  memcpy (result + dirNameLength, name, len);
+  return result;
 }
 
 static const char* getExeName (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, bool inhibitAorXfromBuildfile) {
@@ -149,8 +211,8 @@ static stringList_t* getFiles (bool* inhibitAorXfromBuildfile, commandLineArgs_t
   int dirNameLength;
   const char* dirName;
   stringList_t* list = commandLineArgs_getMainArgs (commandLineArgs);
-  *inhibitAorXfromBuildfile = list == NULL & buildFileArgs != NULL;
-  if (*inhibitAorXfromBuildfile) {
+  *inhibitAorXfromBuildfile = list != NULL;
+  if (list == NULL & buildFileArgs != NULL) {
     list = commandLineArgs_getMainArgs (buildFileArgs);
     dirName = buildfile_dirName (buildFile);
     dirNameLength = buildfile_dirNameLength (buildFile);
@@ -183,27 +245,6 @@ static stringList_t* getFiles (bool* inhibitAorXfromBuildfile, commandLineArgs_t
   return result;
 }
 
-static stringList_t* getIncludeSearchPath (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile) {
-  /* TODO: implementeren. */
-
-  stringList_t* result = NULL;
-  stringList_t* list = commandLineArgs_getStringOptionValue (commandLineArgs, 'I');
-  while (list != NULL) {
-    result = stringList_append (result, list->value);
-    list = list->next;
-  }
-  if (buildFileArgs != NULL) {
-    list = commandLineArgs_getStringOptionValue (buildFileArgs, 'I');
-    int dirNameLength = buildfile_dirNameLength (buildFile);
-    const char* dirName = buildfile_dirName (buildFile);
-    /* En nu die er nog bij... */
-  }
-
-
-  result = stringList_firstElement (result);
-  return result;
-}
-
 static const char* getLibName (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, bool inhibitAorXfromBuildfile) {
   stringList_t* list = commandLineArgs_getStringOptionValue (commandLineArgs, 'a');
   if (list == NULL & buildFileArgs != NULL & !inhibitAorXfromBuildfile) {
@@ -221,32 +262,74 @@ static const char* getLibName (commandLineArgs_t* commandLineArgs, commandLineAr
   return NULL;
 }
 
-static const char* getObjsDirectory (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile) {
-  int dirNameLength;
-  const char* dirName;
-  stringList_t* list = commandLineArgs_getStringOptionValue (commandLineArgs, 'o');
+static const char* getLibVersion (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs) {
+  stringList_t* list = commandLineArgs_getStringOptionValue (commandLineArgs, 'V');
   if (list == NULL & buildFileArgs != NULL) {
-    list = commandLineArgs_getStringOptionValue (buildFileArgs, 'o');
-    dirNameLength = buildfile_dirNameLength (buildFile);
-    dirName = buildfile_dirName (buildFile);
-  } else {
-    dirNameLength = 0;
-    dirName = "";
+    list = commandLineArgs_getStringOptionValue (buildFileArgs, 'V');
   }
   int len;
-  const char* name;
+  const char* version;
   if (list != NULL) {
     if (stringList_length (list) > 1) {
-      errors_printMessageAndExit ("Only one object file destination can be specified");
+      errors_printMessageAndExit ("Only one version can be specified");
     }
-    name = list->value;
+    version = list->value;
     len = list->valueLength + 1;
   } else {
-    name = "objs";
-    len = 5;
+    version = "SNAPSHOT";
+    len = 9;
   }
-  char* result = malloc (dirNameLength + len);
-  memcpy (result, dirName, dirNameLength);
-  memcpy (result + dirNameLength, name, len);
+  char* result = malloc (len);
+  memcpy (result, version, len);
+  return result;
+}
+
+static stringList_t* getMacrosOrLibraries (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, char option) {
+  stringList_t* result = NULL;
+  stringList_t* list = commandLineArgs_getStringOptionValue (commandLineArgs, option);
+  while (list != NULL) {
+    result = stringList_append (result, list->value);
+    list = list->next;
+  }
+  if (buildFileArgs != NULL) {
+    list = commandLineArgs_getStringOptionValue (buildFileArgs, option);
+    while (list != NULL) {
+      result = stringList_append (result, list->value);
+      list = list->next;
+    }
+  }
+  result = stringList_firstElement (result);
+  return result;
+}
+
+static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, char inclOrLib) {
+  stringList_t* result = NULL;
+  stringList_t* list = commandLineArgs_getStringOptionValue (commandLineArgs, inclOrLib);
+  while (list != NULL) {
+    result = stringList_append (result, list->value);
+    list = list->next;
+  }
+  if (buildFileArgs != NULL) {
+    char buf[BUFFER_SIZE];
+    list = commandLineArgs_getStringOptionValue (buildFileArgs, inclOrLib);
+    int dirNameLength = buildfile_dirNameLength (buildFile);
+    const char* dirName = buildfile_dirName (buildFile);
+    while (list != NULL) {
+      if (list->value[0] != '/') {
+        int len = list->valueLength + 1;
+        char* name = dirNameLength + len > BUFFER_SIZE ? malloc (dirNameLength + len) : buf;
+        memcpy (name, dirName, dirNameLength);
+        memcpy (name + dirNameLength, list->value, len);
+        result = stringList_append (result, name);
+        if (name != buf) {
+          free (name);
+        }
+      } else {
+        result = stringList_append (result, list->value);
+      }
+      list = list->next;
+    }
+  }
+  result = stringList_firstElement (result);
   return result;
 }

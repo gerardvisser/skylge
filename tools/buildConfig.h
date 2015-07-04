@@ -20,6 +20,7 @@
 #ifndef BUILD_CONFIG_INCLUDED
 #define BUILD_CONFIG_INCLUDED
 
+#include <stdbool.h>
 #include "stringList.h"
 
 typedef struct {
@@ -30,9 +31,11 @@ typedef struct {
   stringList_t* includeSearchPath;
   const char* optimizationLevel;
   const char* objsDirectory;
+  const char* libDirectory;
   const char* libVersion;
   const char* libName;
   const char* exeName;
+  bool clean;
 } buildConfig_t;
 
 void           buildConfig_delete (buildConfig_t* this);

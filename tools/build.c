@@ -29,6 +29,7 @@
 #define PROGRAMME_NAME    "build"
 #define PROGRAMME_VERSION "2.0-SNAPSHOT"
 
+static void printBuildConfig (buildConfig_t* config);/* TEMP */
 static void printVersionOrHelpIfRequired (int argc, char** args);
 
 int main (int argc, char** args, char** env) {
@@ -36,11 +37,47 @@ int main (int argc, char** args, char** env) {
 
   buildConfig_t* config = buildConfig_new (argc, args);
 
+  printBuildConfig (config);/* TEMP */
 
   buildConfig_delete (config);
 
   return 0;
 }
+
+/* TEMPORARY  */
+static void printList (stringList_t* list) {
+  if (list != NULL) {
+    printf ("%s", list->value);
+    list = list->next;
+    while (list != NULL) {
+      printf (", %s", list->value);
+      list = list->next;
+    }
+  }
+  printf ("\n");
+}
+
+static void printBuildConfig (buildConfig_t* config) {
+  if (config->exeName != NULL) {
+    printf ("\x1B[1mExecutable:\x1B[22m %s\n", config->exeName);
+    printf ("\x1B[1mLibraries:\x1B[22m ");
+    printList (config->libraries);
+    printf ("\x1B[1mLibrary search path:\x1B[22m ");
+    printList (config->libSearchPath);
+  } else if (config->libName != NULL) {
+    printf ("\x1B[1mArchive:\x1B[22m lib%s-%s.a\n", config->libName, config->libVersion);
+    printf ("\x1B[1mArchive directory:\x1B[22m %s\n", config->libDirectory);
+  }
+  printf ("\x1B[1mObject file directory:\x1B[22m %s\n", config->objsDirectory);
+  printf ("\x1B[1mInclude search path:\x1B[22m ");
+  printList (config->includeSearchPath);
+  printf ("\x1B[1mMacros:\x1B[22m ");
+  printList (config->macros);
+  printf ("\x1B[1mFiles:\x1B[22m ");
+  printList (config->files);
+  printf ("\x1B[1mClean:\x1B[22m %s\n", config->clean ? "true" : "false");
+}
+/* END TEMPORARY  */
 
 static void printHelp (void) {
   printf ("Usage: %s [options] [files]\n", PROGRAMME_NAME);
