@@ -65,7 +65,7 @@ static void printBuildConfig (buildConfig_t* config) {
     printf ("\x1B[1mLibrary search path:\x1B[22m ");
     printList (config->libSearchPath);
   } else if (config->libName != NULL) {
-    printf ("\x1B[1mArchive:\x1B[22m lib%s-%s.a\n", config->libName, config->libVersion);
+    printf ("\x1B[1mArchives:\x1B[22m lib%s-%s.a, lib%s-%s-d.a\n", config->libName, config->libVersion, config->libName, config->libVersion);
     printf ("\x1B[1mArchive directory:\x1B[22m %s\n", config->libDirectory);
   }
   printf ("\x1B[1mObject file directory:\x1B[22m %s\n", config->objsDirectory);
@@ -86,7 +86,7 @@ static void printHelp (void) {
   printf ("  --version                Display this program's version number.\n");
   printf ("  -a <libname>             Creates library <libname>. Two archives will be\n");
   printf ("                           created: lib<libname>[-<version>].a and\n");
-  printf ("                           lib<libname>-d[-<version>].a\n");
+  printf ("                           lib<libname>[-<version>]-d.a\n");
   printf ("  -b <file>                Specifies the buildfile to read.\n");
   printf ("  -c                       Clean.\n");
   printf ("  -D <macro>[=<val>]       Define a <macro> with <val> as its value. If just\n");
