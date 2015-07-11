@@ -66,6 +66,11 @@ void stringBuilder_delete (stringBuilder_t* this) {
   free (this);
 }
 
+const char* stringBuilder_getBuffer (stringBuilder_t* this) {
+  stringBuilder_appendChar (this, 0);
+  return this->buffer;
+}
+
 int stringBuilder_length (stringBuilder_t* this) {
   return this->length;
 }

@@ -17,20 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef STRING_BUILDER_INCLUDED
-#define STRING_BUILDER_INCLUDED
+#ifndef FILENAME_INCLUDED
+#define FILENAME_INCLUDED
 
-struct stringBuilder_struct;
-typedef struct stringBuilder_struct stringBuilder_t;
-
-void stringBuilder_append (stringBuilder_t* this, const char* str);
-void stringBuilder_appendChar (stringBuilder_t* this, char c);
-void stringBuilder_appendChars (stringBuilder_t* this, const char* str, int len);
-void stringBuilder_clear (stringBuilder_t* this);
-void stringBuilder_delete (stringBuilder_t* this);
-const char* stringBuilder_getBuffer (stringBuilder_t* this);
-int stringBuilder_length (stringBuilder_t* this);
-stringBuilder_t* stringBuilder_new (int initialCapacity);
-char* stringBuilder_toString (stringBuilder_t* this);
+char* filename_normalize (char* destination, const char* filename, int filenameLen);
 
 #endif
