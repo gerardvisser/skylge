@@ -122,7 +122,7 @@ static int skipComment (const char* argsBuffer, int index);
 static void createArgsArray (int* argc, char*** args, char* argsBuffer) {
   *argc = getArgCount (argsBuffer);
   *args = malloc (sizeof (void*) * (*argc + 1));
-  *args[*argc] = NULL;
+  (*args)[*argc] = NULL;
   int i = 0;
   argsBuffer = nextArg (argsBuffer);
   while (*argsBuffer != 0) {
