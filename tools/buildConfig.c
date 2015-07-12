@@ -40,6 +40,7 @@ static stringList_t* getFiles (bool* inhibitAorXfromBuildfile, commandLineArgs_t
 static const char* getLibName (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, bool inhibitAorXfromBuildfile);
 static const char* getLibVersion (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs);
 static stringList_t* getMacrosOrLibraries (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, char option);
+static int getOptimizationLevel (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs);
 static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, char inclOrLib);
 
 void buildConfig_delete (buildConfig_t* this) {
@@ -48,7 +49,6 @@ void buildConfig_delete (buildConfig_t* this) {
   stringList_delete (this->libraries);
   stringList_delete (this->libSearchPath);
   stringList_delete (this->includeSearchPath);
-  freeIfNecessary (this->optimizationLevel);
   freeIfNecessary (this->objsDirectory);
   freeIfNecessary (this->libDirectory);
   freeIfNecessary (this->libVersion);
@@ -57,22 +57,6 @@ void buildConfig_delete (buildConfig_t* this) {
   free (this);
 }
 
-/*
-typedef struct {
-.  stringList_t* files;
-.  stringList_t* macros;
-.  stringList_t* libraries;
-.  stringList_t* libSearchPath;
-.  stringList_t* includeSearchPath;
-  const char* optimizationLevel;
-.  const char* objsDirectory;
-.  const char* libDirectory;
-.  const char* libVersion;
-.  const char* libName;
-.  const char* exeName;
-.  bool clean;
-} buildConfig_t;
-*/
 buildConfig_t* buildConfig_new (int argc, char** args) {
   commandLineArgs_t* commandLineArgs = getCommandLineArgs (argc - 1, args + 1);
   buildfile_t* buildFile = getBuildFile (commandLineArgs_getStringOptionValue (commandLineArgs, 'b'));
@@ -95,6 +79,7 @@ buildConfig_t* buildConfig_new (int argc, char** args) {
   result->macros = getMacrosOrLibraries (commandLineArgs, buildFileArgs, 'D');
   result->objsDirectory = getDestinationDirectory (commandLineArgs, buildFileArgs, buildFile, 'o');
   result->includeSearchPath = getSearchPath (commandLineArgs, buildFileArgs, buildFile, 'I');
+  result->optimizationLevel = getOptimizationLevel (commandLineArgs, buildFileArgs);
   if (result->exeName != NULL) {
     result->libSearchPath = getSearchPath (commandLineArgs, buildFileArgs, buildFile, 'L');
     result->libraries = getMacrosOrLibraries (commandLineArgs, buildFileArgs, 'l');
@@ -297,6 +282,34 @@ static stringList_t* getMacrosOrLibraries (commandLineArgs_t* commandLineArgs, c
   }
   result = stringList_firstElement (result);
   return result;
+}
+
+static int getOptimizationLevel (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs) {
+  stringList_t* list = commandLineArgs_getStringOptionValue (commandLineArgs, 'O');
+  if (list == NULL & buildFileArgs != NULL) {
+    list = commandLineArgs_getStringOptionValue (buildFileArgs, 'O');
+  }
+  if (list == NULL) {
+    return -1;
+  }
+  if (stringList_length (list) > 1) {
+    errors_printMessageAndExit ("Only one optimization level can be specified");
+  }
+  if (list->valueLength == 1) {
+    switch (list->value[0]) {
+    case 0x30: return 0;
+    case 0x31: return 1;
+    case 0x32: return 2;
+    case 0x33: return 3;
+    case 0x73: return 5;
+    default:
+      errors_printMessageAndExit ("Unknown optimization level. Possible values are: 0, 1, 2, 3, fast, s");
+    }
+  } else if (strcmp (list->value, "fast") != 0) {
+    errors_printMessageAndExit ("Unknown optimization level. Possible values are: 0, 1, 2, 3, fast, s");
+  } else {
+    return 4;
+  }
 }
 
 static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, char inclOrLib) {

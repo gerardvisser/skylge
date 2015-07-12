@@ -68,6 +68,7 @@ static void printBuildConfig (buildConfig_t* config) {
     printf ("\x1B[1mArchives:\x1B[22m lib%s-%s.a, lib%s-%s-d.a\n", config->libName, config->libVersion, config->libName, config->libVersion);
     printf ("\x1B[1mArchive directory:\x1B[22m %s\n", config->libDirectory);
   }
+  printf ("\x1B[1mOptimization level:\x1B[22m %d\n", config->optimizationLevel);
   printf ("\x1B[1mObject file directory:\x1B[22m %s\n", config->objsDirectory);
   printf ("\x1B[1mInclude search path:\x1B[22m ");
   printList (config->includeSearchPath);

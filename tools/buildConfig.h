@@ -29,12 +29,12 @@ typedef struct {
   stringList_t* libraries;
   stringList_t* libSearchPath;
   stringList_t* includeSearchPath;
-  const char* optimizationLevel;
   const char* objsDirectory;
   const char* libDirectory;
   const char* libVersion;
   const char* libName;
   const char* exeName;
+  int optimizationLevel;
   bool clean;
 } buildConfig_t;
 
