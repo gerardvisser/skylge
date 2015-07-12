@@ -38,19 +38,26 @@ const char* commandGenerator_cleanCommand (commandGenerator_t* this) {
   return stringBuilder_getBuffer (this->buffer);
 }
 
-/* filenameMacroValueStartIndex < 0 ? optimize : debug_mode */
-const char* commandGenerator_compileCommand (commandGenerator_t* this, file_t* sourceFile, int filenameMacroValueStartIndex) {
+/* optimizationLevel < 0 ? debug_mode : optimize */
+const char* commandGenerator_compileCommand (commandGenerator_t* this, file_t* sourceFile, int filenameMacroValueStartIndex, int optimizationLevel) {
   stringBuilder_clear (this->buffer);
   stringBuilder_appendChars (this->buffer, this->compileCommand, this->compileCommandLength);
   stringBuilder_appendChars (this->buffer, file_name (sourceFile), file_nameLength (sourceFile) - file_extensionLength (sourceFile));
   stringBuilder_appendChars (this->buffer, "o ", 2);
-  if (filenameMacroValueStartIndex >= 0) {
+  if (optimizationLevel < 0) {
     stringBuilder_appendChars (this->buffer, this->debugMacros, this->debugMacrosLength);
     stringBuilder_appendChars (this->buffer, file_fullName (sourceFile) + filenameMacroValueStartIndex, file_fullNameLength (sourceFile) - filenameMacroValueStartIndex);
     stringBuilder_appendChars (this->buffer, "\\\" ", 3);
-  } else {
+  } else if (optimizationLevel > 0) {
     stringBuilder_appendChars (this->buffer, "-O", 2);
-    /* Opt. level nog zetten. */
+    switch (optimizationLevel) {
+    case 1: stringBuilder_appendChar (this->buffer, '1'); break;
+    case 2: stringBuilder_appendChar (this->buffer, '2'); break;
+    case 3: stringBuilder_appendChar (this->buffer, '3'); break;
+    case 4: stringBuilder_appendChars (this->buffer, "fast", 4); break;
+    case 5: stringBuilder_appendChar (this->buffer, 's');
+    }
+    stringBuilder_appendChar (this->buffer, ' ');
   }
   stringBuilder_appendChars (this->buffer, file_fullName (sourceFile), file_fullNameLength (sourceFile));
   return stringBuilder_getBuffer (this->buffer);

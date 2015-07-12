@@ -28,7 +28,7 @@ struct commandGenerator_struct;
 typedef struct commandGenerator_struct commandGenerator_t;
 
 const char* commandGenerator_cleanCommand (commandGenerator_t* this);
-const char* commandGenerator_compileCommand (commandGenerator_t* this, file_t* sourceFile, int filenameMacroValueStartIndex);
+const char* commandGenerator_compileCommand (commandGenerator_t* this, file_t* sourceFile, int filenameMacroValueStartIndex, int optimizationLevel);
 const char* commandGenerator_createArchiveCommand (commandGenerator_t* this, const char* libDirectory, const char* libName, const char* libVersion, bool debugModeArchive);
 const char* commandGenerator_createExeCommand (commandGenerator_t* this, const char* name, stringList_t* libSearchPath, stringList_t* libraries, bool strip);
 void commandGenerator_delete (commandGenerator_t* this);
