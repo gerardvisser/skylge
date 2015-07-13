@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef BUILD_CONFIG_INCLUDED
-#define BUILD_CONFIG_INCLUDED
+#ifndef BUILD_OPTIONS_INCLUDED
+#define BUILD_OPTIONS_INCLUDED
 
 #include <stdbool.h>
 #include "stringList.h"
@@ -36,9 +36,9 @@ typedef struct {
   const char* exeName;
   int optimizationLevel;
   bool clean;
-} buildConfig_t;
+} buildOptions_t;
 
-void           buildConfig_delete (buildConfig_t* this);
-buildConfig_t* buildConfig_new (int argc, char** args);
+void buildOptions_delete (buildOptions_t* this);
+buildOptions_t* buildOptions_new (int argc, char** args);
 
 #endif

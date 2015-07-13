@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "buildConfig.h"
+#include "buildOptions.h"
 #include "buildfile.h"
 #include "commandLineArgs.h"
 #include "errors.h"
@@ -43,7 +43,7 @@ static stringList_t* getMacrosOrLibraries (commandLineArgs_t* commandLineArgs, c
 static int getOptimizationLevel (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs);
 static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, char inclOrLib);
 
-void buildConfig_delete (buildConfig_t* this) {
+void buildOptions_delete (buildOptions_t* this) {
   stringList_delete (this->files);
   stringList_delete (this->macros);
   stringList_delete (this->libraries);
@@ -57,7 +57,7 @@ void buildConfig_delete (buildConfig_t* this) {
   free (this);
 }
 
-buildConfig_t* buildConfig_new (int argc, char** args) {
+buildOptions_t* buildOptions_new (int argc, char** args) {
   commandLineArgs_t* commandLineArgs = getCommandLineArgs (argc - 1, args + 1);
   buildfile_t* buildFile = getBuildFile (commandLineArgs_getStringOptionValue (commandLineArgs, 'b'));
   commandLineArgs_t* buildFileArgs = NULL;
@@ -65,8 +65,8 @@ buildConfig_t* buildConfig_new (int argc, char** args) {
     buildFileArgs = getCommandLineArgs (buildfile_argCount (buildFile), buildfile_arguments (buildFile));
   }
 
-  buildConfig_t* result = malloc (sizeof (buildConfig_t));
-  memset (result, 0, sizeof (buildConfig_t));
+  buildOptions_t* result = malloc (sizeof (buildOptions_t));
+  memset (result, 0, sizeof (buildOptions_t));
 
   bool inhibitAorXfromBuildfile;
   result->files = getFiles (&inhibitAorXfromBuildfile, commandLineArgs, buildFileArgs, buildFile);

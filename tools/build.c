@@ -19,7 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "buildConfig.h"
+#include "buildOptions.h"
 /*
 #include "errors.h"
 #include "file.h"
@@ -29,17 +29,17 @@
 #define PROGRAMME_NAME    "build"
 #define PROGRAMME_VERSION "2.0-SNAPSHOT"
 
-static void printBuildConfig (buildConfig_t* config);/* TEMP */
+static void printBuildOptions (buildOptions_t* options);/* TEMP */
 static void printVersionOrHelpIfRequired (int argc, char** args);
 
 int main (int argc, char** args, char** env) {
   printVersionOrHelpIfRequired (argc, args);
 
-  buildConfig_t* config = buildConfig_new (argc, args);
+  buildOptions_t* options = buildOptions_new (argc, args);
 
-  printBuildConfig (config);/* TEMP */
+  printBuildOptions (options);/* TEMP */
 
-  buildConfig_delete (config);
+  buildOptions_delete (options);
 
   return 0;
 }
@@ -57,26 +57,26 @@ static void printList (stringList_t* list) {
   printf ("\n");
 }
 
-static void printBuildConfig (buildConfig_t* config) {
-  if (config->exeName != NULL) {
-    printf ("\x1B[1mExecutable:\x1B[22m %s\n", config->exeName);
+static void printBuildOptions (buildOptions_t* options) {
+  if (options->exeName != NULL) {
+    printf ("\x1B[1mExecutable:\x1B[22m %s\n", options->exeName);
     printf ("\x1B[1mLibraries:\x1B[22m ");
-    printList (config->libraries);
+    printList (options->libraries);
     printf ("\x1B[1mLibrary search path:\x1B[22m ");
-    printList (config->libSearchPath);
-  } else if (config->libName != NULL) {
-    printf ("\x1B[1mArchives:\x1B[22m lib%s-%s.a, lib%s-%s-d.a\n", config->libName, config->libVersion, config->libName, config->libVersion);
-    printf ("\x1B[1mArchive directory:\x1B[22m %s\n", config->libDirectory);
+    printList (options->libSearchPath);
+  } else if (options->libName != NULL) {
+    printf ("\x1B[1mArchives:\x1B[22m lib%s-%s.a, lib%s-%s-d.a\n", options->libName, options->libVersion, options->libName, options->libVersion);
+    printf ("\x1B[1mArchive directory:\x1B[22m %s\n", options->libDirectory);
   }
-  printf ("\x1B[1mOptimization level:\x1B[22m %d\n", config->optimizationLevel);
-  printf ("\x1B[1mObject file directory:\x1B[22m %s\n", config->objsDirectory);
+  printf ("\x1B[1mOptimization level:\x1B[22m %d\n", options->optimizationLevel);
+  printf ("\x1B[1mObject file directory:\x1B[22m %s\n", options->objsDirectory);
   printf ("\x1B[1mInclude search path:\x1B[22m ");
-  printList (config->includeSearchPath);
+  printList (options->includeSearchPath);
   printf ("\x1B[1mMacros:\x1B[22m ");
-  printList (config->macros);
+  printList (options->macros);
   printf ("\x1B[1mFiles:\x1B[22m ");
-  printList (config->files);
-  printf ("\x1B[1mClean:\x1B[22m %s\n", config->clean ? "true" : "false");
+  printList (options->files);
+  printf ("\x1B[1mClean:\x1B[22m %s\n", options->clean ? "true" : "false");
 }
 /* END TEMPORARY  */
 
