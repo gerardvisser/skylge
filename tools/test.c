@@ -196,6 +196,69 @@ void testFileInfo (int argc, char** args) {
   }
 }
 
+void testStringBuilder (void) {
+  stringBuilder_t* sb = stringBuilder_new (8);
+
+  stringBuilder_append (sb, "Wie");
+  char* s = stringBuilder_toString (sb);
+  printf ("s = \"%s\", l = %d (actual: %ld)\n", s, stringBuilder_length (sb), strlen (s));
+  free (s);
+
+  stringBuilder_appendChar (sb, ' ');
+  s = stringBuilder_toString (sb);
+  printf ("s = \"%s\", l = %d (actual: %ld)\n", s, stringBuilder_length (sb), strlen (s));
+  free (s);
+
+  stringBuilder_append (sb, "komm");
+  s = stringBuilder_toString (sb);
+  printf ("s = \"%s\", l = %d (actual: %ld)\n", s, stringBuilder_length (sb), strlen (s));
+  free (s);
+
+  stringBuilder_appendChar (sb, ' ');
+  s = stringBuilder_toString (sb);
+  printf ("s = \"%s\", l = %d (actual: %ld)\n", s, stringBuilder_length (sb), strlen (s));
+  free (s);
+
+  stringBuilder_append (sb, "ich");
+  s = stringBuilder_toString (sb);
+  printf ("s = \"%s\", l = %d (actual: %ld)\n", s, stringBuilder_length (sb), strlen (s));
+  free (s);
+
+  stringBuilder_append (sb, " am B");
+  s = stringBuilder_toString (sb);
+  printf ("s = \"%s\", l = %d (actual: %ld)\n", s, stringBuilder_length (sb), strlen (s));
+  free (s);
+
+  stringBuilder_append (sb, "esten den Berg hinan?");
+  s = stringBuilder_toString (sb);
+  printf ("s = \"%s\", l = %d (actual: %ld)\n", s, stringBuilder_length (sb), strlen (s));
+  free (s);
+
+  stringBuilder_clear (sb);
+  s = stringBuilder_toString (sb);
+  printf ("s = \"%s\", l = %d (actual: %ld)\n", s, stringBuilder_length (sb), strlen (s));
+  free (s);
+
+  stringBuilder_append (sb, "Steig nur hinauf");
+  s = stringBuilder_toString (sb);
+  printf ("s = \"%s\", l = %d (actual: %ld)\n", s, stringBuilder_length (sb), strlen (s));
+  free (s);
+
+  stringBuilder_appendChar (sb, ' ');
+  stringBuilder_appendChar (sb, 'u');
+  stringBuilder_appendChar (sb, 'n');
+  stringBuilder_appendChar (sb, 'd');
+  stringBuilder_appendChar (sb, ' ');
+  s = (char*) stringBuilder_getBuffer (sb);
+  printf ("s = \"%s\", l = %d (actual: %ld)\n", s, stringBuilder_length (sb), strlen (s));
+
+  stringBuilder_append (sb, "denk nicht dran!");
+  s = (char*) stringBuilder_getBuffer (sb);
+  printf ("s = \"%s\", l = %d (actual: %ld)\n", s, stringBuilder_length (sb), strlen (s));
+
+  stringBuilder_delete (sb);
+}
+
 void testStringList (void) {
   stringList_t* list = NULL;
   printList (list);
@@ -213,69 +276,4 @@ void testStringList (void) {
   printList (list);
 
   stringList_delete (list);
-}
-
-void testStringBuilder (void) {
-  stringBuilder_t* sb = stringBuilder_new (8);
-
-  stringBuilder_append (sb, "Wie");
-  char* s = stringBuilder_toString (sb);
-  printf ("s = \"%s\", l = %d\n", s, stringBuilder_length (sb));
-  free (s);
-
-  stringBuilder_appendChar (sb, ' ');
-  s = stringBuilder_toString (sb);
-  printf ("s = \"%s\", l = %d\n", s, stringBuilder_length (sb));
-  free (s);
-
-  stringBuilder_append (sb, "komm");
-  s = stringBuilder_toString (sb);
-  printf ("s = \"%s\", l = %d\n", s, stringBuilder_length (sb));
-  free (s);
-
-  stringBuilder_appendChar (sb, ' ');
-  s = stringBuilder_toString (sb);
-  printf ("s = \"%s\", l = %d\n", s, stringBuilder_length (sb));
-  free (s);
-
-  stringBuilder_append (sb, "ich");
-  s = stringBuilder_toString (sb);
-  printf ("s = \"%s\", l = %d\n", s, stringBuilder_length (sb));
-  free (s);
-
-  stringBuilder_append (sb, " am B");
-  s = stringBuilder_toString (sb);
-  printf ("s = \"%s\", l = %d\n", s, stringBuilder_length (sb));
-  free (s);
-
-  stringBuilder_append (sb, "esten den Berg hinan?");
-  s = stringBuilder_toString (sb);
-  printf ("s = \"%s\", l = %d\n", s, stringBuilder_length (sb));
-  free (s);
-
-  stringBuilder_clear (sb);
-  s = stringBuilder_toString (sb);
-  printf ("s = \"%s\", l = %d\n", s, stringBuilder_length (sb));
-  free (s);
-
-  stringBuilder_append (sb, "Steig nur hinauf");
-  s = stringBuilder_toString (sb);
-  printf ("s = \"%s\", l = %d\n", s, stringBuilder_length (sb));
-  free (s);
-
-  stringBuilder_appendChar (sb, ' ');
-  stringBuilder_appendChar (sb, 'u');
-  stringBuilder_appendChar (sb, 'n');
-  stringBuilder_appendChar (sb, 'd');
-  stringBuilder_appendChar (sb, ' ');
-  s = stringBuilder_toString (sb);
-  printf ("s = \"%s\", l = %d\n", s, stringBuilder_length (sb));
-  free (s);
-
-  stringBuilder_append (sb, "denk nicht dran!");
-  s = stringBuilder_toString (sb);
-  printf ("s = \"%s\", l = %d\n", s, stringBuilder_length (sb));
-  free (s);
-
-  stringBuilder_delete (sb);
 }

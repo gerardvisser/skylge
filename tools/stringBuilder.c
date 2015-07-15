@@ -46,7 +46,7 @@ void stringBuilder_append (stringBuilder_t* this, const char* str) {
 void stringBuilder_appendChar (stringBuilder_t* this, char c) {
   ensureCapacity (this, 1);
   this->buffer[this->length] = c;
-  ++this->length;
+  this->length += c != 0;
 }
 
 void stringBuilder_appendChars (stringBuilder_t* this, const char* str, int len) {
