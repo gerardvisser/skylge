@@ -43,16 +43,22 @@ int fileInfo_read (fileInfo_t* fileInfo, const char* filename) {
       errors_printMessageAndExit ("An unknown error occurred while trying to read the attributes of file '%s'", filename);
     }
   }
-  if (S_ISDIR (attrs.st_mode)) {
-    fileInfo->fileType = FILE_TYPE_DIRECTORY;
-  } else if (S_ISREG (attrs.st_mode)) {
-    fileInfo->fileType = FILE_TYPE_REGULAR;
-  } else if (S_ISLNK (attrs.st_mode)) {
-    fileInfo->fileType = FILE_TYPE_SYMLINK;
+  if (errorCode == NO_ERROR) {
+    if (S_ISDIR (attrs.st_mode)) {
+      fileInfo->fileType = FILE_TYPE_DIRECTORY;
+    } else if (S_ISREG (attrs.st_mode)) {
+      fileInfo->fileType = FILE_TYPE_REGULAR;
+    } else if (S_ISLNK (attrs.st_mode)) {
+      fileInfo->fileType = FILE_TYPE_SYMLINK;
+    } else {
+      fileInfo->fileType = FILE_TYPE_UNKNOWN;
+    }
+    fileInfo->modificationTime = attrs.st_mtime;
+    fileInfo->size = attrs.st_size;
   } else {
     fileInfo->fileType = FILE_TYPE_UNKNOWN;
+    fileInfo->modificationTime = 0;
+    fileInfo->size = 0;
   }
-  fileInfo->modificationTime = attrs.st_mtime;
-  fileInfo->size = attrs.st_size;
   return errorCode;
 }

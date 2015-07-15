@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "buildConfig.h"
 #include "buildOptions.h"
 /*
 #include "errors.h"
@@ -33,6 +34,7 @@ static void printBuildOptions (buildOptions_t* options);/* TEMP */
 static void printVersionOrHelpIfRequired (int argc, char** args);
 
 int main (int argc, char** args, char** env) {
+  buildConfig_init (env);
   printVersionOrHelpIfRequired (argc, args);
 
   buildOptions_t* options = buildOptions_new (argc, args);
