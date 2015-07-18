@@ -21,8 +21,8 @@
 #include <stdlib.h>
 #include "buildConfig.h"
 #include "buildOptions.h"
-/*
 #include "errors.h"
+/*
 #include "file.h"
 #include "fileInfo.h"
 */
@@ -30,15 +30,20 @@
 #define PROGRAMME_NAME    "build"
 #define PROGRAMME_VERSION "2.0-SNAPSHOT"
 
+static void handleSpecialOptions (int argc, char** args);
+static void printHelp (void);
+static void printVersion (void);
+
+static void printBuildConfig (void);/* TEMP */
 static void printBuildOptions (buildOptions_t* options);/* TEMP */
-static void printVersionOrHelpIfRequired (int argc, char** args);
 
 int main (int argc, char** args, char** env) {
   buildConfig_init (env);
-  printVersionOrHelpIfRequired (argc, args);
+  handleSpecialOptions (argc, args);
 
   buildOptions_t* options = buildOptions_new (argc, args);
 
+  printBuildConfig ();/* TEMP */
   printBuildOptions (options);/* TEMP */
 
   buildOptions_delete (options);
@@ -46,45 +51,31 @@ int main (int argc, char** args, char** env) {
   return 0;
 }
 
-/* TEMPORARY  */
-static void printList (stringList_t* list) {
-  if (list != NULL) {
-    printf ("%s", list->value);
-    list = list->next;
-    while (list != NULL) {
-      printf (", %s", list->value);
-      list = list->next;
+static void handleSpecialOptions (int argc, char** args) {
+  if (argc > 1) {
+    if (strcmp (args[1], "--help") == 0) {
+      printHelp ();
+    } else if (strcmp (args[1], "--version") == 0) {
+      printVersion ();
+    } else if (strcmp (args[1], "--config") == 0) {
+      if (argc < 4) {
+        errors_printMessageAndExit ("Two arguments expected after --config");
+      }
+      buildConfig_set (args[2], args[3]);
+      buildConfig_save ();
+      exit (EXIT_SUCCESS);
     }
   }
-  printf ("\n");
 }
-
-static void printBuildOptions (buildOptions_t* options) {
-  if (options->exeName != NULL) {
-    printf ("\x1B[1mExecutable:\x1B[22m %s\n", options->exeName);
-    printf ("\x1B[1mLibraries:\x1B[22m ");
-    printList (options->libraries);
-    printf ("\x1B[1mLibrary search path:\x1B[22m ");
-    printList (options->libSearchPath);
-  } else if (options->libName != NULL) {
-    printf ("\x1B[1mArchives:\x1B[22m lib%s-%s.a, lib%s-%s-d.a\n", options->libName, options->libVersion, options->libName, options->libVersion);
-    printf ("\x1B[1mArchive directory:\x1B[22m %s\n", options->libDirectory);
-  }
-  printf ("\x1B[1mOptimization level:\x1B[22m %d\n", options->optimizationLevel);
-  printf ("\x1B[1mObject file directory:\x1B[22m %s\n", options->objsDirectory);
-  printf ("\x1B[1mInclude search path:\x1B[22m ");
-  printList (options->includeSearchPath);
-  printf ("\x1B[1mMacros:\x1B[22m ");
-  printList (options->macros);
-  printf ("\x1B[1mFiles:\x1B[22m ");
-  printList (options->files);
-  printf ("\x1B[1mClean:\x1B[22m %s\n", options->clean ? "true" : "false");
-}
-/* END TEMPORARY  */
 
 static void printHelp (void) {
   printf ("Usage: %s [options] [files]\n", PROGRAMME_NAME);
   printf ("Options:\n");
+  printf ("  --config                 Specify a value for a global variable. Two more argu-\n");
+  printf ("                           ments expected after this option: the variable and\n");
+  printf ("                           its value. Variables that can be set, are: compiler,\n");
+  printf ("                           objectFileExtension, sourceFileExtension. By default\n");
+  printf ("                           their values are: cc, o, c.\n");
   printf ("  --help                   Display this information.\n");
   printf ("  --version                Display this program's version number.\n");
   printf ("  -a <libname>             Creates library <libname>. Two archives will be\n");
@@ -116,12 +107,46 @@ static void printVersion (void) {
   exit (EXIT_SUCCESS);
 }
 
-static void printVersionOrHelpIfRequired (int argc, char** args) {
-  if (argc > 1) {
-    if (strcmp (args[1], "--help") == 0) {
-      printHelp ();
-    } else if (strcmp (args[1], "--version") == 0) {
-      printVersion ();
+
+
+/* TEMPORARY  */
+static void printList (stringList_t* list) {
+  if (list != NULL) {
+    printf ("%s", list->value);
+    list = list->next;
+    while (list != NULL) {
+      printf (", %s", list->value);
+      list = list->next;
     }
   }
+  printf ("\n");
 }
+
+static void printBuildConfig (void) {
+  printf ("\x1B[1mcompiler:\x1B[22m %s\n", buildConfig_compiler ());
+  printf ("\x1B[1mobjectFileExtension:\x1B[22m %s\n", buildConfig_objectFileExtension ());
+  printf ("\x1B[1msourceFileExtension:\x1B[22m %s\n\n", buildConfig_sourceFileExtension ());
+}
+
+static void printBuildOptions (buildOptions_t* options) {
+  if (options->exeName != NULL) {
+    printf ("\x1B[1mExecutable:\x1B[22m %s\n", options->exeName);
+    printf ("\x1B[1mLibraries:\x1B[22m ");
+    printList (options->libraries);
+    printf ("\x1B[1mLibrary search path:\x1B[22m ");
+    printList (options->libSearchPath);
+  } else if (options->libName != NULL) {
+    printf ("\x1B[1mArchives:\x1B[22m lib%s-%s.a, lib%s-%s-d.a\n", options->libName, options->libVersion, options->libName, options->libVersion);
+    printf ("\x1B[1mArchive directory:\x1B[22m %s\n", options->libDirectory);
+  }
+  printf ("\x1B[1mOptimization level:\x1B[22m %d\n", options->optimizationLevel);
+  printf ("\x1B[1mObject file directory:\x1B[22m %s\n", options->objsDirectory);
+  printf ("\x1B[1mInclude search path:\x1B[22m ");
+  printList (options->includeSearchPath);
+  printf ("\x1B[1mMacros:\x1B[22m ");
+  printList (options->macros);
+  printf ("\x1B[1mFiles:\x1B[22m ");
+  printList (options->files);
+  printf ("\x1B[1mClean:\x1B[22m %s\n", options->clean ? "true" : "false");
+}
+/* END TEMPORARY  */

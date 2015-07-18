@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdlib.h>
+#include "buildConfig.h"
 #include "commandGenerator.h"
 #include "stringBuilder.h"
 
@@ -43,7 +44,8 @@ const char* commandGenerator_compileCommand (commandGenerator_t* this, file_t* s
   stringBuilder_clear (this->buffer);
   stringBuilder_appendChars (this->buffer, this->compileCommand, this->compileCommandLength);
   stringBuilder_appendChars (this->buffer, file_name (sourceFile), file_nameLength (sourceFile) - file_extensionLength (sourceFile));
-  stringBuilder_appendChars (this->buffer, "o ", 2);
+  stringBuilder_append (this->buffer, buildConfig_objectFileExtension ());
+  stringBuilder_appendChar (this->buffer, ' ');
   if (optimizationLevel < 0) {
     stringBuilder_appendChars (this->buffer, this->debugMacros, this->debugMacrosLength);
     stringBuilder_appendChars (this->buffer, file_fullName (sourceFile) + filenameMacroValueStartIndex, file_fullNameLength (sourceFile) - filenameMacroValueStartIndex);
@@ -83,7 +85,8 @@ const char* commandGenerator_createArchiveCommand (commandGenerator_t* this, con
 
 const char* commandGenerator_createExeCommand (commandGenerator_t* this, const char* name, stringList_t* libSearchPath, stringList_t* libraries, bool strip) {
   stringBuilder_clear (this->buffer);
-  stringBuilder_appendChars (this->buffer, "c++ ", 4);
+  stringBuilder_append (this->buffer, buildConfig_compiler ());
+  stringBuilder_appendChar (this->buffer, ' ');
   while (libSearchPath != NULL) {
     stringBuilder_appendChars (this->buffer, "-L", 2);
     stringBuilder_appendChars (this->buffer, libSearchPath->value, libSearchPath->valueLength);
@@ -124,7 +127,8 @@ commandGenerator_t* commandGenerator_new (const char* objsDirectory, stringList_
   commandGenerator_t* result = malloc (sizeof (commandGenerator_t));
   result->buffer = stringBuilder_new (4096);
 
-  stringBuilder_append (result->buffer, "c++ -pthread -c ");
+  stringBuilder_append (result->buffer, buildConfig_compiler ());
+  stringBuilder_append (result->buffer, " -pthread -c ");
   while (includeSearchPath != NULL) {
     stringBuilder_appendChars (result->buffer, "-I", 2);
     stringBuilder_appendChars (result->buffer, includeSearchPath->value, includeSearchPath->valueLength);
