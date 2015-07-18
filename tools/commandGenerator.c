@@ -138,7 +138,7 @@ commandGenerator_t* commandGenerator_new (const char* objsDirectory, stringList_
   stringBuilder_appendChars (result->buffer, "-o", 2);
   result->objsDirectoryIndex = stringBuilder_length (result->buffer);
   stringBuilder_append (result->buffer, objsDirectory);
-  //stringBuilder_appendChar (result->buffer, '/');
+  stringBuilder_appendChar (result->buffer, '/');
   result->compileCommand = stringBuilder_toString (result->buffer);
   result->compileCommandLength = stringBuilder_length (result->buffer);
 

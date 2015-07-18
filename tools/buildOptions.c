@@ -23,6 +23,7 @@
 #include "buildfile.h"
 #include "commandLineArgs.h"
 #include "errors.h"
+#include "filename.h"
 
 #define BUFFER_SIZE 256
 
@@ -42,6 +43,7 @@ static const char* getLibVersion (commandLineArgs_t* commandLineArgs, commandLin
 static stringList_t* getMacrosOrLibraries (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, char option);
 static int getOptimizationLevel (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs);
 static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, char inclOrLib);
+static void normalizeFilenames (buildOptions_t* this);
 
 void buildOptions_delete (buildOptions_t* this) {
   stringList_delete (this->files);
@@ -93,6 +95,7 @@ buildOptions_t* buildOptions_new (int argc, char** args) {
     commandLineArgs_delete (buildFileArgs);
     buildfile_delete (buildFile);
   }
+  normalizeFilenames (result);
   return result;
 }
 
@@ -342,4 +345,46 @@ static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandL
   }
   result = stringList_firstElement (result);
   return result;
+}
+
+static stringList_t* normalizeFilenameList (stringList_t* names) {
+  char buf[BUFFER_SIZE];
+  stringList_t* normalizedNames = NULL;
+  while (names != NULL) {
+    char* newName = names->valueLength > BUFFER_SIZE - 1 ? malloc (names->valueLength + 1) : buf;
+    filename_normalize (newName, names->value, names->valueLength);
+    normalizedNames = stringList_append (normalizedNames, newName);
+    if (newName != buf) {
+      free (newName);
+    }
+    names = names->next;
+  }
+  normalizedNames = stringList_firstElement (normalizedNames);
+  return normalizedNames;
+}
+
+static void normalizeFilenames (buildOptions_t* this) {
+  char* oldName = (char*) this->objsDirectory;
+  int oldNameLen = strlen (oldName);
+  this->objsDirectory = filename_normalize (NULL, oldName, oldNameLen);
+  free (oldName);
+
+  oldName = (char*) this->libDirectory;
+  if (oldName != NULL) {
+    oldNameLen = strlen (oldName);
+    this->libDirectory = filename_normalize (NULL, oldName, oldNameLen);
+    free (oldName);
+  }
+
+  stringList_t* oldNames = this->files;
+  this->files = normalizeFilenameList (oldNames);
+  stringList_delete (oldNames);
+
+  oldNames = this->libSearchPath;
+  this->libSearchPath = normalizeFilenameList (oldNames);
+  stringList_delete (oldNames);
+
+  oldNames = this->includeSearchPath;
+  this->includeSearchPath = normalizeFilenameList (oldNames);
+  stringList_delete (oldNames);
 }
