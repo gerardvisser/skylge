@@ -147,23 +147,6 @@ void testFile (int argc, char** args) {
   commandLineArgs_delete (commandLineArgs);
 }
 
-void testFileSublist (void) {
-  file_t* const wd = file_new (".");
-  file_t* cfiles = NULL;
-  file_t* file = wd;
-  while (file != NULL) {
-    if (strcmp (file_extension (file), "c") == 0) {
-      cfiles = file_append (cfiles, file);
-    }
-    file = file_next (file);
-  }
-  file_delete (wd);
-
-  cfiles = file_firstEntry (cfiles);
-  printf ("\nPrinting list of c-files in working directory:\n");
-  printFileList (cfiles);
-}
-
 void testFileInfo (int argc, char** args) {
   int i;
   fileInfo_t info;
@@ -194,6 +177,23 @@ void testFileInfo (int argc, char** args) {
       printf ("file does not exist\n");
     }
   }
+}
+
+void testFileSublist (void) {
+  file_t* const wd = file_new (".");
+  file_t* cfiles = NULL;
+  file_t* file = wd;
+  while (file != NULL) {
+    if (strcmp (file_extension (file), "c") == 0) {
+      cfiles = file_append (cfiles, file);
+    }
+    file = file_next (file);
+  }
+  file_delete (wd);
+
+  cfiles = file_firstEntry (cfiles);
+  printf ("\nPrinting list of c-files in working directory:\n");
+  printFileList (cfiles);
 }
 
 void testStringBuilder (void) {

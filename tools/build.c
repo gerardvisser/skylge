@@ -21,15 +21,15 @@
 #include <stdlib.h>
 #include "buildConfig.h"
 #include "buildOptions.h"
+#include "commandGenerator.h"
 #include "errors.h"
-/*
 #include "file.h"
-#include "fileInfo.h"
-*/
 
 #define PROGRAMME_NAME    "build"
 #define PROGRAMME_VERSION "2.0-SNAPSHOT"
 
+static void compileFiles (stringList_t* files, const int optimizationLevel);
+static void executeCommand (const char* command);
 static void handleSpecialOptions (int argc, char** args);
 static void printHelp (void);
 static void printVersion (void);
@@ -38,17 +38,61 @@ static void printBuildConfig (void);/* TEMP */
 static void printBuildOptions (buildOptions_t* options);/* TEMP */
 
 int main (int argc, char** args, char** env) {
+  if (system (NULL) == 0) {
+    errors_printMessageAndExit ("No command processor available");
+  }
   buildConfig_init (env);
   handleSpecialOptions (argc, args);
 
   buildOptions_t* options = buildOptions_new (argc, args);
+  commandGenerator_t* commandGenerator = commandGenerator_new (options->objsDirectory, options->includeSearchPath, options->macros);
+  executeCommand (commandGenerator_makeDirCommand (commandGenerator, options->objsDirectory));
+
 
   printBuildConfig ();/* TEMP */
   printBuildOptions (options);/* TEMP */
 
+
+  commandGenerator_delete (commandGenerator);
   buildOptions_delete (options);
 
   return 0;
+}
+
+static void compileFile (file_t* file, const int filenameMacroValueStartIndex, const int optimizationLevel) {
+  const char* sourceFileExtension = buildConfig_sourceFileExtension ();
+  while (file != NULL) {
+    switch (file_type (file)) {
+    case FILE_TYPE_DIRECTORY: {
+      file_t* dir = file_new (file_fullName (file));
+      compileFile (dir, filenameMacroValueStartIndex, optimizationLevel);
+    } break;
+
+    case FILE_TYPE_REGULAR:
+      break;
+    }
+    file = file_next (file);
+  }
+}
+
+static void compileFiles (stringList_t* files, const int optimizationLevel) {
+  while (files != NULL) {
+    file_t* file = file_new (files->value);
+    if (file != NULL) {
+      int filenameMacroValueStartIndex = file_fullNameLength (file) - file_nameLength (file);
+      compileFile (file, filenameMacroValueStartIndex, optimizationLevel);
+    }
+    files = files->next;
+  }
+}
+
+static void executeCommand (const char* command) {
+  printf ("%s\n", command);
+  /*
+  if (system (command) != 0) {
+    //Zie: 26.1 Running a Command
+  }
+  */
 }
 
 static void handleSpecialOptions (int argc, char** args) {
