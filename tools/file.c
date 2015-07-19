@@ -190,7 +190,7 @@ int file_nameLength (file_t* this) {
   return this->nameLength;
 }
 
-file_t* file_new (const char* filename) {
+file_t* file_new (const char* filename, int* returnCount) {
   file_t* file = NULL;
 
   fileInfo_t fileInfo;
@@ -206,22 +206,30 @@ file_t* file_new (const char* filename) {
       dirNameEnd = stpcpy (dirNameEnd, "/");
     }
 
+    int count = 0;
     DIR* dir = openDirectory (filename);
     struct dirent* entry = readdir (dir);
     while (entry != NULL) {
       if (!(strcmp (entry->d_name, ".") == 0 | strcmp (entry->d_name, "..") == 0)) {
         strcpy (dirNameEnd, entry->d_name);
         file = file_append (file, file_allocAndInit (fullName));
+        ++count;
       }
       entry = readdir (dir);
     }
     closedir (dir);
     free (fullName);
     file = file_firstEntry (file);
+    if (returnCount != NULL) {
+      *returnCount = count;
+    }
   } break;
 
   case FILE_TYPE_REGULAR:
     file = file_allocAndInit (filename);
+    if (returnCount != NULL) {
+      *returnCount = 1;
+    }
     break;
 
   default:

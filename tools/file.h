@@ -36,7 +36,7 @@ int         file_fullNameLength (file_t* this);
 time_t      file_modificationTime (file_t* this);
 const char* file_name (file_t* this);
 int         file_nameLength (file_t* this);
-file_t*     file_new (const char* filename);
+file_t*     file_new (const char* filename, int* returnCount);
 file_t*     file_next (file_t* this);
 file_t*     file_previous (file_t* this);
 fileType_t  file_type (file_t* this);

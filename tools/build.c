@@ -64,7 +64,7 @@ static void compileFile (file_t* file, const int filenameMacroValueStartIndex, c
   while (file != NULL) {
     switch (file_type (file)) {
     case FILE_TYPE_DIRECTORY: {
-      file_t* dir = file_new (file_fullName (file));
+      file_t* dir = file_new (file_fullName (file), NULL);
       compileFile (dir, filenameMacroValueStartIndex, optimizationLevel);
     } break;
 
@@ -77,7 +77,7 @@ static void compileFile (file_t* file, const int filenameMacroValueStartIndex, c
 
 static void compileFiles (stringList_t* files, const int optimizationLevel) {
   while (files != NULL) {
-    file_t* file = file_new (files->value);
+    file_t* file = file_new (files->value, NULL);
     if (file != NULL) {
       int filenameMacroValueStartIndex = file_fullNameLength (file) - file_nameLength (file);
       compileFile (file, filenameMacroValueStartIndex, optimizationLevel);

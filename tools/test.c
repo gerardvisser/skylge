@@ -140,8 +140,11 @@ void testFile (int argc, char** args) {
     errors_printMessageAndExit ("At least one filename expected");
   }
   while (stringList_length (mainArgs) > 0) {
-    printf ("\nPrinting list for file or directory '%s':\n", mainArgs->value);
-    printFileList (file_new (mainArgs->value));
+    int entryCount;
+    file_t* file = file_new (mainArgs->value, &entryCount);
+    const char* entryOrEntries = entryCount != 1 ? "entries" : "entry";
+    printf ("\nPrinting list (%d %s) for file or directory '%s':\n", entryCount, entryOrEntries, mainArgs->value);
+    printFileList (file);
     mainArgs = mainArgs->next;
   }
   commandLineArgs_delete (commandLineArgs);
@@ -180,7 +183,7 @@ void testFileInfo (int argc, char** args) {
 }
 
 void testFileSublist (void) {
-  file_t* const wd = file_new (".");
+  file_t* const wd = file_new (".", NULL);
   file_t* cfiles = NULL;
   file_t* file = wd;
   while (file != NULL) {
