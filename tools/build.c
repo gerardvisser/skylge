@@ -19,16 +19,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "buildConfig.h"
 #include "buildOptions.h"
 #include "commandGenerator.h"
 #include "errors.h"
 #include "file.h"
+#include "objectFiles.h"
 
 #define PROGRAMME_NAME    "build"
 #define PROGRAMME_VERSION "2.0-SNAPSHOT"
 
-static void compileFiles (stringList_t* files, const int optimizationLevel);
+static void compileFiles (stringList_t* files, const int optimizationLevel, commandGenerator_t* commandGenerator, objectFiles_t* objectFiles);
+static void createExecutable (buildOptions_t* options, commandGenerator_t* commandGenerator);
+static void createLibrary (buildOptions_t* options, commandGenerator_t* commandGenerator);
 static void executeCommand (const char* command);
 static void handleSpecialOptions (int argc, char** args);
 static void printHelp (void);
@@ -48,10 +52,23 @@ int main (int argc, char** args, char** env) {
   commandGenerator_t* commandGenerator = commandGenerator_new (options->objsDirectory, options->includeSearchPath, options->macros);
   executeCommand (commandGenerator_makeDirCommand (commandGenerator, options->objsDirectory));
 
-
   printBuildConfig ();/* TEMP */
   printBuildOptions (options);/* TEMP */
 
+  /*
+  if (options->libName != NULL) {
+    createLibrary (options, commandGenerator);
+  } else if (options->exeName != NULL) {
+    createExecutable (options, commandGenerator);
+  } else {
+    if (options->clean) {
+      executeCommand (commandGenerator_cleanCommand (commandGenerator));
+    }
+    objectFiles_t* objectFiles = objectFiles_new (options->objsDirectory);
+    compileFiles (options->files, options->optimizationLevel, commandGenerator, objectFiles);
+    objectFiles_delete (objectFiles);
+  }
+  */
 
   commandGenerator_delete (commandGenerator);
   buildOptions_delete (options);
@@ -59,31 +76,61 @@ int main (int argc, char** args, char** env) {
   return 0;
 }
 
-static void compileFile (file_t* file, const int filenameMacroValueStartIndex, const int optimizationLevel) {
+static void compileFile (file_t* file, const int filenameMacroValueStartIndex, const int optimizationLevel, commandGenerator_t* commandGenerator, objectFiles_t* objectFiles) {
   const char* sourceFileExtension = buildConfig_sourceFileExtension ();
   while (file != NULL) {
     switch (file_type (file)) {
     case FILE_TYPE_DIRECTORY: {
-      file_t* dir = file_new (file_fullName (file), NULL);
-      compileFile (dir, filenameMacroValueStartIndex, optimizationLevel);
+      file_t* dirEntries = file_new (file_fullName (file), NULL);
+      compileFile (dirEntries, filenameMacroValueStartIndex, optimizationLevel, commandGenerator, objectFiles);
+      file_delete (dirEntries);
     } break;
 
     case FILE_TYPE_REGULAR:
+      if (strcmp (file_extension (file), sourceFileExtension) == 0) {
+        if (file_modificationTime (file) > objectFiles_modificationTimeOfCorrespondingObjectFile (objectFiles, file)) {
+          executeCommand (commandGenerator_compileCommand (commandGenerator, file, filenameMacroValueStartIndex, optimizationLevel));
+        }
+      }
       break;
     }
     file = file_next (file);
   }
 }
 
-static void compileFiles (stringList_t* files, const int optimizationLevel) {
+static void compileFiles (stringList_t* files, const int optimizationLevel, commandGenerator_t* commandGenerator, objectFiles_t* objectFiles) {
   while (files != NULL) {
     file_t* file = file_new (files->value, NULL);
     if (file != NULL) {
       int filenameMacroValueStartIndex = file_fullNameLength (file) - file_nameLength (file);
-      compileFile (file, filenameMacroValueStartIndex, optimizationLevel);
+      compileFile (file, filenameMacroValueStartIndex, optimizationLevel, commandGenerator, objectFiles);
+      file_delete (file);
     }
     files = files->next;
   }
+}
+
+static void createExecutable (buildOptions_t* options, commandGenerator_t* commandGenerator) {
+    if (options->clean) {
+      executeCommand (commandGenerator_cleanCommand (commandGenerator));
+    }
+    objectFiles_t* objectFiles = objectFiles_new (options->objsDirectory);
+    compileFiles (options->files, options->optimizationLevel, commandGenerator, objectFiles);
+
+    bool strip = options->optimizationLevel > 0;
+    if (options->optimizationLevel < 0) {
+      /* DEBUG_MODE:
+         Voordat we gaan linken moet er eerst gekeken worden of voor de opgegeven bibliotheken ook een
+         debugversie bestaat. Als dat 't geval is, dan moet de naam van de bibiotheek worden gewijzigd
+         in de naam van de desbetreffende debugversie. */
+    } else {
+    }
+    //executeCommand (commandGenerator_createExeCommand (commandGenerator, options->exeName, options->libSearchPath, libraries, strip));
+
+    objectFiles_delete (objectFiles);
+}
+
+static void createLibrary (buildOptions_t* options, commandGenerator_t* commandGenerator) {
 }
 
 static void executeCommand (const char* command) {
