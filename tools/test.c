@@ -2,15 +2,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "buildConfig.h"
 #include "commandLineArgs.h"
 #include "file.h"
 #include "fileInfo.h"
+#include "objectFiles.h"
 #include "stringBuilder.h"
 
 void testCommandLineArgs (int argc, char** args);
 void testFile (int argc, char** args);
 void testFileInfo (int argc, char** args);
 void testFileSublist (void);
+void testObjectFiles (char** env); /* Needs special setup. */
 void testStringBuilder (void);
 void testStringList (void);
 
@@ -197,6 +200,27 @@ void testFileSublist (void) {
   cfiles = file_firstEntry (cfiles);
   printf ("\nPrinting list of c-files in working directory:\n");
   printFileList (cfiles);
+}
+
+void testObjectFiles (char** env) {
+  buildConfig_init (env);
+
+  file_t* const sourceFiles = file_new ("temp/src", NULL);
+  objectFiles_t* const objectFiles = objectFiles_new ("temp/objs");
+  const char* const ext = buildConfig_sourceFileExtension ();
+
+  file_t* file = sourceFiles;
+  while (file != NULL) {
+    if (strcmp (file_extension (file), ext) == 0) {
+      printf ("Modification time for object file associated with '%s': ", file_name (file));
+      printDate (objectFiles_modificationTimeOfCorrespondingObjectFile (objectFiles, file));
+      printf ("\n");
+    }
+    file = file_next (file);
+  }
+
+  objectFiles_delete (objectFiles);
+  file_delete (sourceFiles);
 }
 
 void testStringBuilder (void) {
