@@ -106,17 +106,19 @@ static file_t* file_allocAndInit (const char* fullName) {
 }
 
 file_t* file_append (file_t* this, file_t* file) {
-  if (!(file->previous == NULL & file->next == NULL)) {
-    file = file_copy (file);
+  if (file == NULL) {
+    return this;
   }
-  if (this == NULL) {
-    return file;
+  if (this != NULL) {
+    if (file->previous != NULL) {
+      errors_printMessageAndExit ("\x1B[7m%s: The specified file already has a predecessor\x1B[27m", __func__);
+    }
+    if (this->next != NULL) {
+      errors_printMessageAndExit ("\x1B[7m%s: Can only append to the end of a list\x1B[27m", __func__);
+    }
+    this->next = file;
+    file->previous = this;
   }
-  if (this->next != NULL) {
-    errors_printMessageAndExit ("\x1B[7mCan only append to the end of a list\x1B[27m");
-  }
-  this->next = file;
-  file->previous = this;
   return file;
 }
 
