@@ -191,7 +191,7 @@ void testFileSublist (void) {
   file_t* file = wd;
   while (file != NULL) {
     if (strcmp (file_extension (file), "c") == 0) {
-      cfiles = file_append (cfiles, file);
+      cfiles = file_append (cfiles, file_copy (file));
     }
     file = file_next (file);
   }

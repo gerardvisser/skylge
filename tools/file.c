@@ -105,7 +105,22 @@ static file_t* file_allocAndInit (const char* fullName) {
   return result;
 }
 
-static file_t* file_copy (file_t* this) {
+file_t* file_append (file_t* this, file_t* file) {
+  if (!(file->previous == NULL & file->next == NULL)) {
+    file = file_copy (file);
+  }
+  if (this == NULL) {
+    return file;
+  }
+  if (this->next != NULL) {
+    errors_printMessageAndExit ("\x1B[7mCan only append to the end of a list\x1B[27m");
+  }
+  this->next = file;
+  file->previous = this;
+  return file;
+}
+
+file_t* file_copy (file_t* this) {
   file_t* result = malloc (sizeof (file_t));
   char* fullNameCopy = malloc (this->fullNameLength + 1);
   strcpy (fullNameCopy, this->fullName);
@@ -121,21 +136,6 @@ static file_t* file_copy (file_t* this) {
   result->fullNameLength = this->fullNameLength;
   result->nameLength = this->nameLength;
   return result;
-}
-
-file_t* file_append (file_t* this, file_t* file) {
-  if (!(file->previous == NULL & file->next == NULL)) {
-    file = file_copy (file);
-  }
-  if (this == NULL) {
-    return file;
-  }
-  if (this->next != NULL) {
-    errors_printMessageAndExit ("\x1B[7mCan only append to the end of a list\x1B[27m");
-  }
-  this->next = file;
-  file->previous = this;
-  return file;
 }
 
 void file_delete (file_t* this) {
@@ -176,6 +176,16 @@ const char* file_fullName (file_t* this) {
 
 int file_fullNameLength (file_t* this) {
   return this->fullNameLength;
+}
+
+file_t* file_lastEntry (file_t* this) {
+  if (this == NULL) {
+    return NULL;
+  }
+  while (this->next != NULL) {
+    this = this->next;
+  }
+  return this;
 }
 
 time_t file_modificationTime (file_t* this) {

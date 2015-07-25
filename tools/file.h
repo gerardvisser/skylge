@@ -27,12 +27,14 @@ struct file_struct;
 typedef struct file_struct file_t;
 
 file_t*     file_append (file_t* this, file_t* file);
+file_t*     file_copy (file_t* this);
 void        file_delete (file_t* this);
 const char* file_extension (file_t* this);
 int         file_extensionLength (file_t* this);
 file_t*     file_firstEntry (file_t* this);
 const char* file_fullName (file_t* this);
 int         file_fullNameLength (file_t* this);
+file_t*     file_lastEntry (file_t* this);
 time_t      file_modificationTime (file_t* this);
 const char* file_name (file_t* this);
 int         file_nameLength (file_t* this);
