@@ -20,8 +20,7 @@ void testStringBuilder (void);
 void testStringList (void);
 
 int main (int argc, char** args, char** env) {
-  //testFile (argc, args);
-  testLibraries ();
+  testFile (argc, args);
 
   return 0;
 }
@@ -241,6 +240,7 @@ void testLibraries (void) {
   LIB_TEST ("dak", false);
   LIB_TEST ("kat", false);
   LIB_TEST ("vogel", false);
+  printf ("\x1B[0m");
 
   libraries_delete (libs);
 }
