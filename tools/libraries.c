@@ -116,7 +116,7 @@ libraries_t* libraries_new (stringList_t* libSearchPath) {
     file_delete (files);
 
     if (count > 0) {
-      qsort (result->archives, count, sizeof (void*), (__compar_fn_t) compareArchives);
+      qsort (result->archives, count, sizeof (archive_t), (__compar_fn_t) compareArchives);
     } else {
       free (result->archives);
     }

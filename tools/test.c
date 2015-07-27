@@ -6,6 +6,7 @@
 #include "commandLineArgs.h"
 #include "file.h"
 #include "fileInfo.h"
+#include "libraries.h"
 #include "objectFiles.h"
 #include "stringBuilder.h"
 
@@ -13,12 +14,14 @@ void testCommandLineArgs (int argc, char** args);
 void testFile (int argc, char** args);
 void testFileInfo (int argc, char** args);
 void testFileSublist (void);
+void testLibraries (void); /* Needs special setup. */
 void testObjectFiles (char** env); /* Needs special setup. */
 void testStringBuilder (void);
 void testStringList (void);
 
 int main (int argc, char** args, char** env) {
-  testFile (argc, args);
+  //testFile (argc, args);
+  testLibraries ();
 
   return 0;
 }
@@ -200,6 +203,46 @@ void testFileSublist (void) {
   cfiles = file_firstEntry (cfiles);
   printf ("\nPrinting list of c-files in working directory:\n");
   printFileList (cfiles);
+}
+
+/*
+Created four directories:
+temp/lib1 containing: libflat.a, libgebouw.a, libkruiwagen.a, libtent.a
+temp/lib2 containing: nothing
+temp/lib3 containing: libpaal.a, libtocht.a, libzon.a
+temp/lib4 containing: libwolk.a   */
+#define LIB_TEST(n, answer) \
+  name = n; \
+  exists = libraries_exists (libs, name); \
+  col = exists == answer ? "\x1B[38;5;40m" : "\x1B[38;5;160m"; \
+  printf ("%s'%s' exists? %s\n", col, name, exists ? "true" : "false")
+
+void testLibraries (void) {
+  stringList_t* dirs = stringList_new ("temp/lib1");
+  dirs = stringList_append (dirs, "temp/lib2");
+  dirs = stringList_append (dirs, "temp/lib3");
+  dirs = stringList_append (dirs, "temp/lib4");
+  dirs = stringList_firstElement (dirs);
+  libraries_t* libs = libraries_new (dirs);
+  stringList_delete (dirs);
+
+  const char* name;
+  const char* col;
+  bool exists;
+
+  LIB_TEST ("flat", true);
+  LIB_TEST ("gebouw", true);
+  LIB_TEST ("kruiwagen", true);
+  LIB_TEST ("paal", true);
+  LIB_TEST ("tent", true);
+  LIB_TEST ("tocht", true);
+  LIB_TEST ("wolk", true);
+  LIB_TEST ("zon", true);
+  LIB_TEST ("dak", false);
+  LIB_TEST ("kat", false);
+  LIB_TEST ("vogel", false);
+
+  libraries_delete (libs);
 }
 
 void testObjectFiles (char** env) {
