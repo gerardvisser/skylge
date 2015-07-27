@@ -25,6 +25,7 @@
 #include "commandGenerator.h"
 #include "errors.h"
 #include "file.h"
+#include "libraries.h"
 #include "objectFiles.h"
 
 #define PROGRAMME_NAME    "build"
@@ -117,16 +118,36 @@ static void createExecutable (buildOptions_t* options, commandGenerator_t* comma
     objectFiles_t* objectFiles = objectFiles_new (options->objsDirectory);
     compileFiles (options->files, options->optimizationLevel, commandGenerator, objectFiles);
 
+    stringList_t* libs = NULL;
     bool strip = options->optimizationLevel > 0;
-    if (options->optimizationLevel < 0) {
-      /* DEBUG_MODE:
-         Voordat we gaan linken moet er eerst gekeken worden of voor de opgegeven bibliotheken ook een
-         debugversie bestaat. Als dat 't geval is, dan moet de naam van de bibiotheek worden gewijzigd
-         in de naam van de desbetreffende debugversie. */
+    if (options->optimizationLevel < 0 & !(options->libSearchPath == NULL | options->libraries == NULL)) {
+      /* DEBUG_MODE: change all library names for which a debug version can be found. */
+      stringList_t* specifiedLibs = options->libraries;
+      stringBuilder_t* debugLibName = stringBuilder_new (256);
+      libraries_t* libraries = libraries_new (options->libSearchPath);
+      while (specifiedLibs != NULL) {
+        stringBuilder_appendChars (debugLibName, specifiedLibs->value, specifiedLibs->valueLength);
+        stringBuilder_appendChars (debugLibName, "-d", 2);
+        const char* debugName = stringBuilder_getBuffer (debugLibName);
+        if (libraries_exists (libraries, debugName)) {
+          libs = stringList_append (libs, debugName);
+        } else {
+          libs = stringList_append (libs, specifiedLibs->value);
+        }
+        stringBuilder_clear (debugLibName);
+        specifiedLibs = specifiedLibs->next;
+      }
+      libs = stringList_firstElement (libs);
+      stringBuilder_delete (debugLibName);
+      libraries_delete (libraries);
     } else {
+      libs = options->libraries;
     }
-    //executeCommand (commandGenerator_createExeCommand (commandGenerator, options->exeName, options->libSearchPath, libraries, strip));
+    executeCommand (commandGenerator_createExeCommand (commandGenerator, options->exeName, options->libSearchPath, libs, strip));
 
+    if (libs != options->libraries) {
+      stringList_delete (libs);
+    }
     objectFiles_delete (objectFiles);
 }
 
