@@ -51,12 +51,13 @@ int main (int argc, char** args, char** env) {
 
   buildOptions_t* options = buildOptions_new (argc, args);
   commandGenerator_t* commandGenerator = commandGenerator_new (options->objsDirectory, options->includeSearchPath, options->macros);
-  executeCommand (commandGenerator_makeDirCommand (commandGenerator, options->objsDirectory));
 
   printBuildConfig ();/* TEMP */
   printBuildOptions (options);/* TEMP */
 
   /*
+  */
+  executeCommand (commandGenerator_makeDirCommand (commandGenerator, options->objsDirectory));
   if (options->libName != NULL) {
     createLibrary (options, commandGenerator);
   } else if (options->exeName != NULL) {
@@ -69,7 +70,6 @@ int main (int argc, char** args, char** env) {
     compileFiles (options->files, options->optimizationLevel, commandGenerator, objectFiles);
     objectFiles_delete (objectFiles);
   }
-  */
 
   commandGenerator_delete (commandGenerator);
   buildOptions_delete (options);
@@ -291,6 +291,6 @@ static void printBuildOptions (buildOptions_t* options) {
   printf ("\x1B[1mFiles:\x1B[22m ");
   printList (options->files);
   printf ("\x1B[1mSnapshot:\x1B[22m %s\n", options->snapshot ? "true" : "false");
-  printf ("\x1B[1mClean:\x1B[22m %s\n", options->clean ? "true" : "false");
+  printf ("\x1B[1mClean:\x1B[22m %s\n\n", options->clean ? "true" : "false");
 }
 /* END TEMPORARY  */
