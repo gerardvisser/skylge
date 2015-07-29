@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include "buildConfig.h"
 #include "commandGenerator.h"
+#include "libraries.h"
 #include "stringBuilder.h"
 
 struct commandGenerator_struct {
@@ -65,19 +66,13 @@ const char* commandGenerator_compileCommand (commandGenerator_t* this, file_t* s
   return stringBuilder_getBuffer (this->buffer);
 }
 
-const char* commandGenerator_createArchiveCommand (commandGenerator_t* this, const char* libDirectory, const char* libName, const char* libVersion, bool debugModeArchive) {
+const char* commandGenerator_createArchiveCommand (commandGenerator_t* this, const char* libDirectory, const char* libName) {
   stringBuilder_clear (this->buffer);
   stringBuilder_appendChars (this->buffer, "ar rcs ", 7);
   stringBuilder_append (this->buffer, libDirectory);
   stringBuilder_appendChar (this->buffer, '/');
-  stringBuilder_appendChars (this->buffer, "lib", 3);
-  stringBuilder_append (this->buffer, libName);
-  stringBuilder_appendChar (this->buffer, '-');
-  stringBuilder_append (this->buffer, libVersion);
-  if (debugModeArchive) {
-    stringBuilder_appendChars (this->buffer, "-d", 2);
-  }
-  stringBuilder_appendChars (this->buffer, ".a ", 3);
+  libraries_filenameForName (this->buffer, libName);
+  stringBuilder_appendChar (this->buffer, ' ');
   stringBuilder_appendChars (this->buffer, this->compileCommand + this->objsDirectoryIndex, this->compileCommandLength - this->objsDirectoryIndex);
   stringBuilder_appendChar (this->buffer, '*');
   return stringBuilder_getBuffer (this->buffer);

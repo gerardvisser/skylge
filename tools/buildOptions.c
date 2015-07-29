@@ -41,8 +41,9 @@ static stringList_t* getFiles (bool* inhibitAorXfromBuildfile, commandLineArgs_t
 static const char* getLibName (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, bool inhibitAorXfromBuildfile);
 static const char* getLibVersion (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs);
 static stringList_t* getMacrosOrLibraries (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, char option);
-static int getOptimizationLevel (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs);
+static int getOptimizationLevel (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, bool snapshotVersion);
 static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, char inclOrLib);
+static bool isSnapshotVersion (const char* version);
 static void normalizeFilenames (buildOptions_t* this);
 
 void buildOptions_delete (buildOptions_t* this) {
@@ -77,18 +78,19 @@ buildOptions_t* buildOptions_new (int argc, char** args) {
   if (!(result->exeName == NULL | result->libName == NULL)) {
     errors_printMessageAndExit ("Should an archive or an executable be created (cannot create both)?");
   }
-  result->clean = getBoolOption (commandLineArgs, buildFileArgs, 'c');
-  result->macros = getMacrosOrLibraries (commandLineArgs, buildFileArgs, 'D');
-  result->objsDirectory = getDestinationDirectory (commandLineArgs, buildFileArgs, buildFile, 'o');
-  result->includeSearchPath = getSearchPath (commandLineArgs, buildFileArgs, buildFile, 'I');
-  result->optimizationLevel = getOptimizationLevel (commandLineArgs, buildFileArgs);
   if (result->exeName != NULL) {
     result->libSearchPath = getSearchPath (commandLineArgs, buildFileArgs, buildFile, 'L');
     result->libraries = getMacrosOrLibraries (commandLineArgs, buildFileArgs, 'l');
   } else if (result->libName != NULL) {
     result->libDirectory = getDestinationDirectory (commandLineArgs, buildFileArgs, buildFile, 'L');
     result->libVersion = getLibVersion (commandLineArgs, buildFileArgs);
+    result->snapshot = isSnapshotVersion (result->libVersion);
   }
+  result->clean = getBoolOption (commandLineArgs, buildFileArgs, 'c');
+  result->macros = getMacrosOrLibraries (commandLineArgs, buildFileArgs, 'D');
+  result->objsDirectory = getDestinationDirectory (commandLineArgs, buildFileArgs, buildFile, 'o');
+  result->includeSearchPath = getSearchPath (commandLineArgs, buildFileArgs, buildFile, 'I');
+  result->optimizationLevel = getOptimizationLevel (commandLineArgs, buildFileArgs, result->snapshot);
 
   commandLineArgs_delete (commandLineArgs);
   if (buildFile != NULL) {
@@ -287,9 +289,9 @@ static stringList_t* getMacrosOrLibraries (commandLineArgs_t* commandLineArgs, c
   return result;
 }
 
-static int getOptimizationLevel (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs) {
+static int getOptimizationLevel (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, bool snapshotVersion) {
   stringList_t* list = commandLineArgs_getStringOptionValue (commandLineArgs, 'O');
-  if (list == NULL & buildFileArgs != NULL) {
+  if (list == NULL & buildFileArgs != NULL & !snapshotVersion) {
     list = commandLineArgs_getStringOptionValue (buildFileArgs, 'O');
   }
   if (list == NULL) {
@@ -345,6 +347,11 @@ static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandL
   }
   result = stringList_firstElement (result);
   return result;
+}
+
+static bool isSnapshotVersion (const char* version) {
+  int len = strlen (version);
+  return len > 7 && memcmp (version + len - 8, "SNAPSHOT", 9) == 0;
 }
 
 static stringList_t* normalizeFilenameList (stringList_t* names) {

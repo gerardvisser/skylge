@@ -35,6 +35,7 @@ typedef struct {
   const char* libName;
   const char* exeName;
   int optimizationLevel;
+  bool snapshot;
   bool clean;
 } buildOptions_t;
 

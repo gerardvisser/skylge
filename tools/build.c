@@ -112,46 +112,78 @@ static void compileFiles (stringList_t* files, const int optimizationLevel, comm
 }
 
 static void createExecutable (buildOptions_t* options, commandGenerator_t* commandGenerator) {
+  if (options->clean) {
+    executeCommand (commandGenerator_cleanCommand (commandGenerator));
+  }
+  objectFiles_t* objectFiles = objectFiles_new (options->objsDirectory);
+  compileFiles (options->files, options->optimizationLevel, commandGenerator, objectFiles);
+
+  stringList_t* libs = NULL;
+  bool strip = options->optimizationLevel > 0;
+  if (options->optimizationLevel < 0 & !(options->libSearchPath == NULL | options->libraries == NULL)) {
+    /* DEBUG_MODE: change all library names for which a debug version can be found. */
+    stringList_t* specifiedLibs = options->libraries;
+    stringBuilder_t* debugLibName = stringBuilder_new (256);
+    libraries_t* libraries = libraries_new (options->libSearchPath);
+    while (specifiedLibs != NULL) {
+      stringBuilder_appendChars (debugLibName, specifiedLibs->value, specifiedLibs->valueLength);
+      stringBuilder_appendChars (debugLibName, "-d", 2);
+      const char* debugName = stringBuilder_getBuffer (debugLibName);
+      if (libraries_exists (libraries, debugName)) {
+        libs = stringList_append (libs, debugName);
+      } else {
+        libs = stringList_append (libs, specifiedLibs->value);
+      }
+      stringBuilder_clear (debugLibName);
+      specifiedLibs = specifiedLibs->next;
+    }
+    libs = stringList_firstElement (libs);
+    stringBuilder_delete (debugLibName);
+    libraries_delete (libraries);
+  } else {
+    libs = options->libraries;
+  }
+  executeCommand (commandGenerator_createExeCommand (commandGenerator, options->exeName, options->libSearchPath, libs, strip));
+
+  if (libs != options->libraries) {
+    stringList_delete (libs);
+  }
+  objectFiles_delete (objectFiles);
+}
+
+static void createLibrary (buildOptions_t* options, commandGenerator_t* commandGenerator) {
+  stringBuilder_t* name = stringBuilder_new (64);
+  stringBuilder_append (name, options->libName);
+  stringBuilder_appendChar (name, '-');
+  stringBuilder_append (name, options->libVersion);
+  if (options->snapshot) {
+
+    if (options->optimizationLevel < 0) {
+      stringBuilder_appendChars (name, "-d", 2);
+    }
     if (options->clean) {
       executeCommand (commandGenerator_cleanCommand (commandGenerator));
     }
     objectFiles_t* objectFiles = objectFiles_new (options->objsDirectory);
     compileFiles (options->files, options->optimizationLevel, commandGenerator, objectFiles);
-
-    stringList_t* libs = NULL;
-    bool strip = options->optimizationLevel > 0;
-    if (options->optimizationLevel < 0 & !(options->libSearchPath == NULL | options->libraries == NULL)) {
-      /* DEBUG_MODE: change all library names for which a debug version can be found. */
-      stringList_t* specifiedLibs = options->libraries;
-      stringBuilder_t* debugLibName = stringBuilder_new (256);
-      libraries_t* libraries = libraries_new (options->libSearchPath);
-      while (specifiedLibs != NULL) {
-        stringBuilder_appendChars (debugLibName, specifiedLibs->value, specifiedLibs->valueLength);
-        stringBuilder_appendChars (debugLibName, "-d", 2);
-        const char* debugName = stringBuilder_getBuffer (debugLibName);
-        if (libraries_exists (libraries, debugName)) {
-          libs = stringList_append (libs, debugName);
-        } else {
-          libs = stringList_append (libs, specifiedLibs->value);
-        }
-        stringBuilder_clear (debugLibName);
-        specifiedLibs = specifiedLibs->next;
-      }
-      libs = stringList_firstElement (libs);
-      stringBuilder_delete (debugLibName);
-      libraries_delete (libraries);
-    } else {
-      libs = options->libraries;
-    }
-    executeCommand (commandGenerator_createExeCommand (commandGenerator, options->exeName, options->libSearchPath, libs, strip));
-
-    if (libs != options->libraries) {
-      stringList_delete (libs);
-    }
+    executeCommand (commandGenerator_createArchiveCommand (commandGenerator, options->libDirectory, stringBuilder_getBuffer (name)));
     objectFiles_delete (objectFiles);
-}
 
-static void createLibrary (buildOptions_t* options, commandGenerator_t* commandGenerator) {
+  } else {
+
+    int optimizationLevel = options->optimizationLevel > -1 ? options->optimizationLevel : 0;
+    executeCommand (commandGenerator_cleanCommand (commandGenerator));
+    objectFiles_t* objectFiles = objectFiles_new (options->objsDirectory);
+    compileFiles (options->files, optimizationLevel, commandGenerator, objectFiles);
+    executeCommand (commandGenerator_createArchiveCommand (commandGenerator, options->libDirectory, stringBuilder_getBuffer (name)));
+    stringBuilder_appendChars (name, "-d", 2);
+    executeCommand (commandGenerator_cleanCommand (commandGenerator));
+    compileFiles (options->files, -1, commandGenerator, objectFiles);
+    executeCommand (commandGenerator_createArchiveCommand (commandGenerator, options->libDirectory, stringBuilder_getBuffer (name)));
+    objectFiles_delete (objectFiles);
+
+  }
+  stringBuilder_delete (name);
 }
 
 static void executeCommand (const char* command) {
@@ -258,6 +290,7 @@ static void printBuildOptions (buildOptions_t* options) {
   printList (options->macros);
   printf ("\x1B[1mFiles:\x1B[22m ");
   printList (options->files);
+  printf ("\x1B[1mSnapshot:\x1B[22m %s\n", options->snapshot ? "true" : "false");
   printf ("\x1B[1mClean:\x1B[22m %s\n", options->clean ? "true" : "false");
 }
 /* END TEMPORARY  */
