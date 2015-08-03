@@ -138,8 +138,13 @@ static const char* getDestinationDirectory (commandLineArgs_t* commandLineArgs, 
   stringList_t* list = commandLineArgs_getStringOptionValue (commandLineArgs, option);
   if (list == NULL & buildFileArgs != NULL) {
     list = commandLineArgs_getStringOptionValue (buildFileArgs, option);
-    dirNameLength = buildfile_dirNameLength (buildFile);
-    dirName = buildfile_dirName (buildFile);
+    if (list != NULL && filename_isAbsolute (list->value)) {
+      dirNameLength = 0;
+      dirName = "";
+    } else {
+      dirNameLength = buildfile_dirNameLength (buildFile);
+      dirName = buildfile_dirName (buildFile);
+    }
   } else {
     dirNameLength = 0;
     dirName = "";
@@ -185,6 +190,10 @@ static const char* getExeName (commandLineArgs_t* commandLineArgs, commandLineAr
     if (stringList_length (list) > 1) {
       errors_printMessageAndExit ("Only one executable target can be specified");
     }
+    if (filename_isAbsolute (list->value)) {
+      dirNameLength = 0;
+      dirName = "";
+    }
     int len = list->valueLength + 1;
     char* result = malloc (dirNameLength + len);
     memcpy (result, dirName, dirNameLength);
@@ -216,15 +225,18 @@ static stringList_t* getFiles (bool* inhibitAorXfromBuildfile, commandLineArgs_t
   stringList_t* result = NULL;
 
   while (list != NULL) {
-    int len = list->valueLength + 1;
-    char* name = dirNameLength + len > BUFFER_SIZE ? malloc (dirNameLength + len) : buf;
-    //mempcpy (mempcpy (name, dirName, dirNameLength), list->value, len);
-    memcpy (name, dirName, dirNameLength);
-    memcpy (name + dirNameLength, list->value, len);
-    result = stringList_append (result, name);
-
-    if (name != buf) {
-      free (name);
+    if (!filename_isAbsolute (list->value)) {
+      int len = list->valueLength + 1;
+      char* name = dirNameLength + len > BUFFER_SIZE ? malloc (dirNameLength + len) : buf;
+      //mempcpy (mempcpy (name, dirName, dirNameLength), list->value, len);
+      memcpy (name, dirName, dirNameLength);
+      memcpy (name + dirNameLength, list->value, len);
+      result = stringList_append (result, name);
+      if (name != buf) {
+        free (name);
+      }
+    } else {
+      result = stringList_append (result, list->value);
     }
     list = list->next;
   }
