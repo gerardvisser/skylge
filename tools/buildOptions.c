@@ -383,6 +383,13 @@ static void normalizeFilenames (buildOptions_t* this) {
     free (oldName);
   }
 
+  oldName = (char*) this->exeName;
+  if (oldName != NULL) {
+    oldNameLen = strlen (oldName);
+    this->exeName = filename_normalize (NULL, oldName, oldNameLen);
+    free (oldName);
+  }
+
   stringList_t* oldNames = this->files;
   this->files = normalizeFilenameList (oldNames);
   stringList_delete (oldNames);
