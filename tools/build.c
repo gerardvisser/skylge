@@ -152,6 +152,8 @@ static void createExecutable (buildOptions_t* options, commandGenerator_t* comma
 }
 
 static void createLibrary (buildOptions_t* options, commandGenerator_t* commandGenerator) {
+  executeCommand (commandGenerator_makeDirCommand (commandGenerator, options->libDirectory));
+
   stringBuilder_t* name = stringBuilder_new (64);
   stringBuilder_append (name, options->libName);
   stringBuilder_appendChar (name, '-');
