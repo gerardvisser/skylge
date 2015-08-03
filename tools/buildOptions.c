@@ -330,7 +330,7 @@ static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandL
     int dirNameLength = buildfile_dirNameLength (buildFile);
     const char* dirName = buildfile_dirName (buildFile);
     while (list != NULL) {
-      if (list->value[0] != '/') {
+      if (!filename_isAbsolute (list->value)) {
         int len = list->valueLength + 1;
         char* name = dirNameLength + len > BUFFER_SIZE ? malloc (dirNameLength + len) : buf;
         memcpy (name, dirName, dirNameLength);

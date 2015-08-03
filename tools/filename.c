@@ -29,6 +29,10 @@ static void normalizeAbsFile (char* destination, const char* filename, int filen
 static void normalizeRelFile (char* destination, const char* filename, int filenameLen);
 static int slashCount (const char* filename, int filenameLen);
 
+bool filename_isAbsolute (const char* filename) {
+  return filename[0] == '/' | filename[0] == '~';
+}
+
 char* filename_normalize (char* destination, const char* filename, int filenameLen) {
   if (filename == NULL) {
     errors_printMessageAndExit ("\x1B[7mNull pointer exception (%s:%d)\x1B[27m", __FILE__, __LINE__);

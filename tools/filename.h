@@ -20,6 +20,9 @@
 #ifndef FILENAME_INCLUDED
 #define FILENAME_INCLUDED
 
+#include <stdbool.h>
+
+bool filename_isAbsolute (const char* filename);
 char* filename_normalize (char* destination, const char* filename, int filenameLen);
 
 #endif
