@@ -56,7 +56,6 @@ int main (int argc, char** args, char** env) {
   printBuildOptions (options);/* TEMP */
 
   /*
-  */
   executeCommand (commandGenerator_makeDirCommand (commandGenerator, options->objsDirectory));
   if (options->libName != NULL) {
     createLibrary (options, commandGenerator);
@@ -70,6 +69,7 @@ int main (int argc, char** args, char** env) {
     compileFiles (options->files, options->optimizationLevel, commandGenerator, objectFiles);
     objectFiles_delete (objectFiles);
   }
+  */
 
   commandGenerator_delete (commandGenerator);
   buildOptions_delete (options);
