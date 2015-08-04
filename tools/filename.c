@@ -18,6 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdlib.h>
+#include <string.h>
+#include "buildConfig.h"
 #include "errors.h"
 #include "filename.h"
 
@@ -37,13 +39,29 @@ char* filename_normalize (char* destination, const char* filename, int filenameL
   if (filename == NULL) {
     errors_printMessageAndExit ("\x1B[7mNull pointer exception (%s:%d)\x1B[27m", __FILE__, __LINE__);
   }
+  char* name;
+  if (filename[0] == '~') {
+    const char* homeDir = buildConfig_homeDirectory ();
+    const int homeDirLen = strlen (homeDir);
+    name = malloc (filenameLen + homeDirLen);
+    memcpy (name, homeDir, homeDirLen);
+    memcpy (name + homeDirLen, filename + 1, filenameLen);
+    filenameLen += homeDirLen - 1;
+  } else {
+    name = (char*) filename;
+  }
+
   if (destination == NULL) {
     destination = malloc (filenameLen + 2);
   }
-  if (filename[0] == '/') {
-    normalizeAbsFile (destination, filename, filenameLen);
+  if (name[0] == '/') {
+    normalizeAbsFile (destination, name, filenameLen);
   } else {
-    normalizeRelFile (destination, filename, filenameLen);
+    normalizeRelFile (destination, name, filenameLen);
+  }
+
+  if (name != filename) {
+    free (name);
   }
   return destination;
 }
