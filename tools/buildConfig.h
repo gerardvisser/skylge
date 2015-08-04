@@ -21,6 +21,7 @@
 #define BUILD_CONFIG_INCLUDED
 
 const char* buildConfig_compiler (void);
+const char* buildConfig_homeDirectory (void);
 void        buildConfig_init (char** env);
 const char* buildConfig_objectFileExtension (void);
 void        buildConfig_save (void);

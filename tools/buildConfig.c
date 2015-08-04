@@ -37,6 +37,7 @@ typedef struct {
   const int nameLength;
 } configElem_t;
 
+static char homeDirectory[512];
 static char configFilename[512];
 static configElem_t configElements[CONFIG_ELEM_COUNT];
 
@@ -46,6 +47,10 @@ static void printOutputErrorMessageAndExit (void);
 
 const char* buildConfig_compiler (void) {
   return configElements[COMPILER_IDX].value;
+}
+
+const char* buildConfig_homeDirectory (void) {
+  return homeDirectory;
 }
 
 void buildConfig_init (char** env) {
@@ -149,9 +154,8 @@ static void initializeConfigFilename (char** env) {
   if (env[i] == NULL) {
     errors_printMessageAndExit ("Environment variable 'HOME' not found");
   }
-  char* p = stpcpy (configFilename, env[i] + 5);
-  p = stpcpy (p, "/.buildconfig");
-  *p = 0;
+  strcpy (homeDirectory, env[i] + 5);
+  stpcpy (stpcpy (configFilename, homeDirectory), "/.buildconfig");
 }
 
 static void printOutputErrorMessageAndExit (void) {
