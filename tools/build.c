@@ -188,11 +188,13 @@ static void createLibrary (buildOptions_t* options, commandGenerator_t* commandG
 
 static void executeCommand (const char* command) {
   printf ("%s\n", command);
-  /*
-  if (system (command) != 0) {
-    //Zie: 26.1 Running a Command
+  int status = system (command);
+  if (status != 0) {
+    if (status == -1) {
+      errors_printMessageAndExit ("\nCould not create a shell process to execute the command");
+    }
+    exit (EXIT_FAILURE);
   }
-  */
 }
 
 static void handleSpecialOptions (int argc, char** args) {
