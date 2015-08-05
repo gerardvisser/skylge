@@ -224,7 +224,7 @@ static void printHelp (void) {
   printf ("                           Their default values are:\n");
   printf ("                            cc, o, c\n");
   printf ("  --help                   Display this information.\n");
-  printf ("  --version                Display this program's version number.\n");
+  printf ("  --version                Display this programme's version number.\n");
   printf ("  -a <libname>             Creates library <libname>.\n");
   printf ("  -b <file>                Specifies the buildfile to read.\n");
   printf ("  -c                       Clean.\n");
