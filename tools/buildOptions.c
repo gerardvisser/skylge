@@ -113,7 +113,10 @@ static buildfile_t* getBuildFile (stringList_t* buildfilenames) {
   if (stringList_length (buildfilenames) > 1) {
     errors_printMessageAndExit ("Only one buildfile can be specified");
   }
-  return buildfile_new (buildfilenames->value);
+  char* buildfileLocation = filename_normalize (NULL, buildfilenames->value, buildfilenames->valueLength);
+  buildfile_t* result = buildfile_new (buildfileLocation);
+  free (buildfileLocation);
+  return result;
 }
 
 static commandLineArgs_t* getCommandLineArgs (int argc, char** args) {

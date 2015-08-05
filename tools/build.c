@@ -232,7 +232,9 @@ static void printHelp (void) {
   printf ("                           <macro> is given, <val> is taken to be 1.\n");
   printf ("  -I <directory>           Add <directory> to the path to search for headers to\n");
   printf ("                           include.\n");
-  printf ("  -L <directory>           Add <directory> to the library search path.\n");
+  printf ("  -L <directory>           In combination with option -x, <directory> is added\n");
+  printf ("                           to the library search path. In combination with -a\n");
+  printf ("                           it is the location where to put the created library.\n");
   printf ("  -l <libname>             Link with library <libname>.\n");
   printf ("  -O <level>               Set optimization level. Possible values are: 0, 1, 2,\n");
   printf ("                           3, fast, s.\n");
@@ -274,16 +276,6 @@ static void printBuildConfig (void) {
 }
 
 static void printBuildOptions (buildOptions_t* options) {
-  if (options->exeName != NULL) {
-    printf ("\x1B[1mExecutable:\x1B[22m %s\n", options->exeName);
-    printf ("\x1B[1mLibraries:\x1B[22m ");
-    printList (options->libraries);
-    printf ("\x1B[1mLibrary search path:\x1B[22m ");
-    printList (options->libSearchPath);
-  } else if (options->libName != NULL) {
-    printf ("\x1B[1mArchives:\x1B[22m lib%s-%s.a, lib%s-%s-d.a\n", options->libName, options->libVersion, options->libName, options->libVersion);
-    printf ("\x1B[1mArchive directory:\x1B[22m %s\n", options->libDirectory);
-  }
   printf ("\x1B[1mOptimization level:\x1B[22m %d\n", options->optimizationLevel);
   printf ("\x1B[1mObject file directory:\x1B[22m %s\n", options->objsDirectory);
   printf ("\x1B[1mInclude search path:\x1B[22m ");
@@ -294,5 +286,17 @@ static void printBuildOptions (buildOptions_t* options) {
   printList (options->files);
   printf ("\x1B[1mSnapshot:\x1B[22m %s\n", options->snapshot ? "true" : "false");
   printf ("\x1B[1mClean:\x1B[22m %s\n\n", options->clean ? "true" : "false");
+  if (options->exeName != NULL) {
+    printf ("\x1B[1mExecutable:\x1B[22m %s\n", options->exeName);
+    printf ("\x1B[1mLibraries:\x1B[22m ");
+    printList (options->libraries);
+    printf ("\x1B[1mLibrary search path:\x1B[22m ");
+    printList (options->libSearchPath);
+    printf ("\n");
+  } else if (options->libName != NULL) {
+    printf ("\x1B[1mArchives:\x1B[22m lib%s-%s.a, lib%s-%s-d.a\n", options->libName, options->libVersion, options->libName, options->libVersion);
+    printf ("\x1B[1mArchive directory:\x1B[22m %s\n", options->libDirectory);
+    printf ("\n");
+  }
 }
 /* END TEMPORARY  */
