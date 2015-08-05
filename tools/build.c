@@ -27,9 +27,7 @@
 #include "file.h"
 #include "libraries.h"
 #include "objectFiles.h"
-
-#define PROGRAMME_NAME    "build"
-#define PROGRAMME_VERSION "2.0-SNAPSHOT"
+#include "programmeInfo.h"
 
 static void compileFiles (stringList_t* files, const int optimizationLevel, commandGenerator_t* commandGenerator, objectFiles_t* objectFiles);
 static void createExecutable (buildOptions_t* options, commandGenerator_t* commandGenerator);

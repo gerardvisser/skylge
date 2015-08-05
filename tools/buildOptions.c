@@ -24,6 +24,7 @@
 #include "commandLineArgs.h"
 #include "errors.h"
 #include "filename.h"
+#include "programmeInfo.h"
 
 #define BUFFER_SIZE 256
 
@@ -221,7 +222,7 @@ static stringList_t* getFiles (bool* inhibitAorXfromBuildfile, commandLineArgs_t
     dirNameLength = 0;
   }
   if (list == NULL) {
-    errors_printMessageAndExit ("No input files");
+    errors_printMessageAndExit ("No input files.\nTry '%s --help' for more information", PROGRAMME_NAME);
   }
 
   char buf[BUFFER_SIZE];
