@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "buildConfig.h"
 #include "buildOptions.h"
 #include "buildfile.h"
 #include "commandLineArgs.h"
@@ -370,11 +371,11 @@ static bool isSnapshotVersion (const char* version) {
   return len > 7 && memcmp (version + len - 8, "SNAPSHOT", 9) == 0;
 }
 
-static stringList_t* normalizeFilenameList (stringList_t* names) {
+static stringList_t* normalizeFilenameList (stringList_t* names, int homeDirNameLength) {
   char buf[BUFFER_SIZE];
   stringList_t* normalizedNames = NULL;
   while (names != NULL) {
-    char* newName = names->valueLength > BUFFER_SIZE - 1 ? malloc (names->valueLength + 1) : buf;
+    char* newName = names->valueLength > BUFFER_SIZE - homeDirNameLength ? malloc (names->valueLength + homeDirNameLength) : buf;
     filename_normalize (newName, names->value, names->valueLength);
     normalizedNames = stringList_append (normalizedNames, newName);
     if (newName != buf) {
@@ -406,15 +407,17 @@ static void normalizeFilenames (buildOptions_t* this) {
     free (oldName);
   }
 
+  int homeDirNameLength = strlen (buildConfig_homeDirectory ());
+
   stringList_t* oldNames = this->files;
-  this->files = normalizeFilenameList (oldNames);
+  this->files = normalizeFilenameList (oldNames, homeDirNameLength);
   stringList_delete (oldNames);
 
   oldNames = this->libSearchPath;
-  this->libSearchPath = normalizeFilenameList (oldNames);
+  this->libSearchPath = normalizeFilenameList (oldNames, homeDirNameLength);
   stringList_delete (oldNames);
 
   oldNames = this->includeSearchPath;
-  this->includeSearchPath = normalizeFilenameList (oldNames);
+  this->includeSearchPath = normalizeFilenameList (oldNames, homeDirNameLength);
   stringList_delete (oldNames);
 }
