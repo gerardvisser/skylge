@@ -47,6 +47,7 @@ static int getOptimizationLevel (commandLineArgs_t* commandLineArgs, commandLine
 static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, char inclOrLib);
 static bool isSnapshotVersion (const char* version);
 static void normalizeFilenames (buildOptions_t* this);
+static void setDevelopmentOptions (buildOptions_t* this, commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs);
 
 void buildOptions_delete (buildOptions_t* this) {
   stringList_delete (this->files);
@@ -93,6 +94,7 @@ buildOptions_t* buildOptions_new (int argc, char** args) {
   result->objsDirectory = getDestinationDirectory (commandLineArgs, buildFileArgs, buildFile, 'o');
   result->includeSearchPath = getSearchPath (commandLineArgs, buildFileArgs, buildFile, 'I');
   result->optimizationLevel = getOptimizationLevel (commandLineArgs, buildFileArgs, result->snapshot);
+  setDevelopmentOptions (result, commandLineArgs, buildFileArgs);
 
   commandLineArgs_delete (commandLineArgs);
   if (buildFile != NULL) {
@@ -133,6 +135,7 @@ static commandLineArgs_t* getCommandLineArgs (int argc, char** args) {
                                                                         commandLineArgs_option_newStringOption ('o', NULL),
                                                                         commandLineArgs_option_newStringOption ('V', NULL),
                                                                         commandLineArgs_option_newStringOption ('x', NULL),
+                                                                        commandLineArgs_option_newStringOption ('-', NULL),
                                                                         NULL);
   return commandLineArgs;
 }
@@ -420,4 +423,26 @@ static void normalizeFilenames (buildOptions_t* this) {
   oldNames = this->includeSearchPath;
   this->includeSearchPath = normalizeFilenameList (oldNames, homeDirNameLength);
   stringList_delete (oldNames);
+}
+
+static void setDevelopmentoptions (buildOptions_t* this, stringList_t* options) {
+  while (options != NULL) {
+    if (strcmp (options->value, "dry-run") == 0) {
+      this->dryRun = true;
+    } else if (strcmp (options->value, "show-config") == 0) {
+      this->showConfig = true;
+    } else if (strcmp (options->value, "show-job-description") == 0) {
+      this->showJobDescription = true;
+    } else if (!(strcmp (options->value, "config") == 0 || strcmp (options->value, "help") == 0 || strcmp (options->value, "version") == 0)) {
+      errors_printMessageAndExit ("Unknown option '--%s'", options->value);
+    }
+    options = options->next;
+  }
+}
+
+static void setDevelopmentOptions (buildOptions_t* this, commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs) {
+  setDevelopmentoptions (this, commandLineArgs_getStringOptionValue (commandLineArgs, '-'));
+  if (buildFileArgs != NULL) {
+    setDevelopmentoptions (this, commandLineArgs_getStringOptionValue (buildFileArgs, '-'));
+  }
 }

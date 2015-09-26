@@ -32,5 +32,5 @@ OBJS="objs/buildConfig.o objs/commandLineArgs.o objs/errors.o objs/file.o objs/f
 
 echo "cc -s -otest.elf $OBJS objs/test.o"
 cc -s -otest.elf $OBJS objs/test.o
-echo "cc -s -obuild $OBJS objs/build.o objs/buildfile.o objs/buildOptions.o objs/commandGenerator.o"
-cc -s -obuild $OBJS objs/build.o objs/buildfile.o objs/buildOptions.o objs/commandGenerator.o
+echo "cc -s -obuild $OBJS objs/build.o objs/buildfile.o objs/buildOptions.o objs/commandGenerator.o objs/devutils.o"
+cc -s -obuild $OBJS objs/build.o objs/buildfile.o objs/buildOptions.o objs/commandGenerator.o objs/devutils.o

@@ -17,32 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef BUILD_OPTIONS_INCLUDED
-#define BUILD_OPTIONS_INCLUDED
+#ifndef DEVUTILS_INCLUDED
+#define DEVUTILS_INCLUDED
 
-#include <stdbool.h>
-#include "stringList.h"
+#include "buildOptions.h"
 
-typedef struct {
-  stringList_t* files;
-  stringList_t* macros;
-  stringList_t* libraries;
-  stringList_t* libSearchPath;
-  stringList_t* includeSearchPath;
-  const char* objsDirectory;
-  const char* libDirectory;
-  const char* libVersion;
-  const char* libName;
-  const char* exeName;
-  int optimizationLevel;
-  bool snapshot;
-  bool clean;
-  bool dryRun;
-  bool showConfig;
-  bool showJobDescription;
-} buildOptions_t;
-
-void buildOptions_delete (buildOptions_t* this);
-buildOptions_t* buildOptions_new (int argc, char** args);
+void devutils_printBuildConfig (void);
+void devutils_printBuildOptions (buildOptions_t* options);
 
 #endif

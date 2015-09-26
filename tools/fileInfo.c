@@ -19,6 +19,7 @@
 
 #include <errno.h>
 #include <sys/stat.h>
+#include "errors.h"
 #include "fileInfo.h"
 
 #define NO_ERROR            0

@@ -23,11 +23,14 @@
 #include "buildConfig.h"
 #include "buildOptions.h"
 #include "commandGenerator.h"
+#include "devutils.h"
 #include "errors.h"
 #include "file.h"
 #include "libraries.h"
 #include "objectFiles.h"
 #include "programmeInfo.h"
+
+static bool dryRun;
 
 static void compileFiles (stringList_t* files, const int optimizationLevel, commandGenerator_t* commandGenerator, objectFiles_t* objectFiles);
 static void createExecutable (buildOptions_t* options, commandGenerator_t* commandGenerator);
@@ -36,9 +39,6 @@ static void executeCommand (const char* command);
 static void handleSpecialOptions (int argc, char** args);
 static void printHelp (void);
 static void printVersion (void);
-
-static void printBuildConfig (void);/* TEMP */
-static void printBuildOptions (buildOptions_t* options);/* TEMP */
 
 int main (int argc, char** args, char** env) {
   if (system (NULL) == 0) {
@@ -50,10 +50,14 @@ int main (int argc, char** args, char** env) {
   buildOptions_t* options = buildOptions_new (argc, args);
   commandGenerator_t* commandGenerator = commandGenerator_new (options->objsDirectory, options->includeSearchPath, options->macros);
 
-  printBuildConfig ();/* TEMP */
-  printBuildOptions (options);/* TEMP */
+  dryRun = options->dryRun;
+  if (options->showConfig) {
+    devutils_printBuildConfig ();
+  }
+  if (options->showJobDescription) {
+    devutils_printBuildOptions (options);
+  }
 
-  /*
   executeCommand (commandGenerator_makeDirCommand (commandGenerator, options->objsDirectory));
   if (options->libName != NULL) {
     createLibrary (options, commandGenerator);
@@ -67,7 +71,6 @@ int main (int argc, char** args, char** env) {
     compileFiles (options->files, options->optimizationLevel, commandGenerator, objectFiles);
     objectFiles_delete (objectFiles);
   }
-  */
 
   commandGenerator_delete (commandGenerator);
   buildOptions_delete (options);
@@ -188,12 +191,14 @@ static void createLibrary (buildOptions_t* options, commandGenerator_t* commandG
 
 static void executeCommand (const char* command) {
   printf ("%s\n", command);
-  int status = system (command);
-  if (status != 0) {
-    if (status == -1) {
-      errors_printMessageAndExit ("\nCould not create a shell process to execute the command");
+  if (!dryRun) {
+    int status = system (command);
+    if (status != 0) {
+      if (status == -1) {
+        errors_printMessageAndExit ("\nCould not create a shell process to execute the command");
+      }
+      exit (EXIT_FAILURE);
     }
-    exit (EXIT_FAILURE);
   }
 }
 
@@ -253,50 +258,3 @@ static void printVersion (void) {
   printf ("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n");
   exit (EXIT_SUCCESS);
 }
-
-
-
-/* TEMPORARY  */
-static void printList (stringList_t* list) {
-  if (list != NULL) {
-    printf ("%s", list->value);
-    list = list->next;
-    while (list != NULL) {
-      printf (", %s", list->value);
-      list = list->next;
-    }
-  }
-  printf ("\n");
-}
-
-static void printBuildConfig (void) {
-  printf ("\x1B[1mcompiler:\x1B[22m %s\n", buildConfig_compiler ());
-  printf ("\x1B[1mobjectFileExtension:\x1B[22m %s\n", buildConfig_objectFileExtension ());
-  printf ("\x1B[1msourceFileExtension:\x1B[22m %s\n\n", buildConfig_sourceFileExtension ());
-}
-
-static void printBuildOptions (buildOptions_t* options) {
-  printf ("\x1B[1mOptimization level:\x1B[22m %d\n", options->optimizationLevel);
-  printf ("\x1B[1mObject file directory:\x1B[22m %s\n", options->objsDirectory);
-  printf ("\x1B[1mInclude search path:\x1B[22m ");
-  printList (options->includeSearchPath);
-  printf ("\x1B[1mMacros:\x1B[22m ");
-  printList (options->macros);
-  printf ("\x1B[1mFiles:\x1B[22m ");
-  printList (options->files);
-  printf ("\x1B[1mSnapshot:\x1B[22m %s\n", options->snapshot ? "true" : "false");
-  printf ("\x1B[1mClean:\x1B[22m %s\n\n", options->clean ? "true" : "false");
-  if (options->exeName != NULL) {
-    printf ("\x1B[1mExecutable:\x1B[22m %s\n", options->exeName);
-    printf ("\x1B[1mLibraries:\x1B[22m ");
-    printList (options->libraries);
-    printf ("\x1B[1mLibrary search path:\x1B[22m ");
-    printList (options->libSearchPath);
-    printf ("\n");
-  } else if (options->libName != NULL) {
-    printf ("\x1B[1mArchives:\x1B[22m lib%s-%s.a, lib%s-%s-d.a\n", options->libName, options->libVersion, options->libName, options->libVersion);
-    printf ("\x1B[1mArchive directory:\x1B[22m %s\n", options->libDirectory);
-    printf ("\n");
-  }
-}
-/* END TEMPORARY  */
