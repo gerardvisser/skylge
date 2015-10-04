@@ -1,0 +1,7 @@
+-a skylge-core
+-V 1.0-SNAPSHOT
+-L ../../lib     # De directory waar het archief wordt geplaatst.
+
+-I include
+
+src
