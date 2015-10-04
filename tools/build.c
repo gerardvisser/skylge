@@ -35,7 +35,7 @@ static bool dryRun;
 static void compileFiles (stringList_t* files, const int optimizationLevel, commandGenerator_t* commandGenerator, objectFiles_t* objectFiles);
 static void createExecutable (buildOptions_t* options, commandGenerator_t* commandGenerator);
 static void createLibrary (buildOptions_t* options, commandGenerator_t* commandGenerator);
-static void executeCommand (const char* command);
+static void executeCommand (const char* command, bool exitOnFailure);
 static void handleSpecialOptions (int argc, char** args);
 static void printHelp (void);
 static void printVersion (void);
@@ -58,14 +58,14 @@ int main (int argc, char** args, char** env) {
     devutils_printBuildOptions (options);
   }
 
-  executeCommand (commandGenerator_makeDirCommand (commandGenerator, options->objsDirectory));
+  executeCommand (commandGenerator_makeDirCommand (commandGenerator, options->objsDirectory), true);
   if (options->libName != NULL) {
     createLibrary (options, commandGenerator);
   } else if (options->exeName != NULL) {
     createExecutable (options, commandGenerator);
   } else {
     if (options->clean) {
-      executeCommand (commandGenerator_cleanCommand (commandGenerator));
+      executeCommand (commandGenerator_cleanCommand (commandGenerator), false);
     }
     objectFiles_t* objectFiles = objectFiles_new (options->objsDirectory);
     compileFiles (options->files, options->optimizationLevel, commandGenerator, objectFiles);
@@ -91,7 +91,7 @@ static void compileFile (file_t* file, const int filenameMacroValueStartIndex, c
     case FILE_TYPE_REGULAR:
       if (strcmp (file_extension (file), sourceFileExtension) == 0) {
         if (file_modificationTime (file) > objectFiles_modificationTimeOfCorrespondingObjectFile (objectFiles, file)) {
-          executeCommand (commandGenerator_compileCommand (commandGenerator, file, filenameMacroValueStartIndex, optimizationLevel));
+          executeCommand (commandGenerator_compileCommand (commandGenerator, file, filenameMacroValueStartIndex, optimizationLevel), true);
         }
       }
       break;
@@ -114,7 +114,7 @@ static void compileFiles (stringList_t* files, const int optimizationLevel, comm
 
 static void createExecutable (buildOptions_t* options, commandGenerator_t* commandGenerator) {
   if (options->clean) {
-    executeCommand (commandGenerator_cleanCommand (commandGenerator));
+    executeCommand (commandGenerator_cleanCommand (commandGenerator), false);
   }
   objectFiles_t* objectFiles = objectFiles_new (options->objsDirectory);
   compileFiles (options->files, options->optimizationLevel, commandGenerator, objectFiles);
@@ -144,7 +144,7 @@ static void createExecutable (buildOptions_t* options, commandGenerator_t* comma
   } else {
     libs = options->libraries;
   }
-  executeCommand (commandGenerator_createExeCommand (commandGenerator, options->exeName, options->libSearchPath, libs, strip));
+  executeCommand (commandGenerator_createExeCommand (commandGenerator, options->exeName, options->libSearchPath, libs, strip), true);
 
   if (libs != options->libraries) {
     stringList_delete (libs);
@@ -153,7 +153,7 @@ static void createExecutable (buildOptions_t* options, commandGenerator_t* comma
 }
 
 static void createLibrary (buildOptions_t* options, commandGenerator_t* commandGenerator) {
-  executeCommand (commandGenerator_makeDirCommand (commandGenerator, options->libDirectory));
+  executeCommand (commandGenerator_makeDirCommand (commandGenerator, options->libDirectory), true);
 
   stringBuilder_t* name = stringBuilder_new (64);
   stringBuilder_append (name, options->libName);
@@ -165,39 +165,40 @@ static void createLibrary (buildOptions_t* options, commandGenerator_t* commandG
       stringBuilder_appendChars (name, "-d", 2);
     }
     if (options->clean) {
-      executeCommand (commandGenerator_cleanCommand (commandGenerator));
+      executeCommand (commandGenerator_cleanCommand (commandGenerator), false);
     }
     objectFiles_t* objectFiles = objectFiles_new (options->objsDirectory);
     compileFiles (options->files, options->optimizationLevel, commandGenerator, objectFiles);
-    executeCommand (commandGenerator_createArchiveCommand (commandGenerator, options->libDirectory, stringBuilder_getBuffer (name)));
+    executeCommand (commandGenerator_createArchiveCommand (commandGenerator, options->libDirectory, stringBuilder_getBuffer (name)), true);
     objectFiles_delete (objectFiles);
 
   } else {
 
     int optimizationLevel = options->optimizationLevel > -1 ? options->optimizationLevel : 0;
-    executeCommand (commandGenerator_cleanCommand (commandGenerator));
+    executeCommand (commandGenerator_cleanCommand (commandGenerator), false);
     objectFiles_t* objectFiles = objectFiles_new (options->objsDirectory);
     compileFiles (options->files, optimizationLevel, commandGenerator, objectFiles);
-    executeCommand (commandGenerator_createArchiveCommand (commandGenerator, options->libDirectory, stringBuilder_getBuffer (name)));
+    executeCommand (commandGenerator_createArchiveCommand (commandGenerator, options->libDirectory, stringBuilder_getBuffer (name)), true);
     stringBuilder_appendChars (name, "-d", 2);
-    executeCommand (commandGenerator_cleanCommand (commandGenerator));
+    executeCommand (commandGenerator_cleanCommand (commandGenerator), false);
     compileFiles (options->files, -1, commandGenerator, objectFiles);
-    executeCommand (commandGenerator_createArchiveCommand (commandGenerator, options->libDirectory, stringBuilder_getBuffer (name)));
+    executeCommand (commandGenerator_createArchiveCommand (commandGenerator, options->libDirectory, stringBuilder_getBuffer (name)), true);
     objectFiles_delete (objectFiles);
 
   }
   stringBuilder_delete (name);
 }
 
-static void executeCommand (const char* command) {
+static void executeCommand (const char* command, bool exitOnFailure) {
   printf ("%s\n", command);
   if (!dryRun) {
     int status = system (command);
     if (status != 0) {
       if (status == -1) {
         errors_printMessageAndExit ("\nCould not create a shell process to execute the command");
+      } else if (exitOnFailure) {
+        exit (EXIT_FAILURE);
       }
-      exit (EXIT_FAILURE);
     }
   }
 }
