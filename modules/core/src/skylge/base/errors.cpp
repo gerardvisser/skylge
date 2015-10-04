@@ -47,12 +47,11 @@ static pthread_t threads[MAX_THREADS];
 static int btsp[MAX_THREADS];
 static const char* btstack[MAX_THREADS * BTSTACK_SIZE];
 
-static int strbufoff = 0;
 static char strbuf[STRING_BUF_SIZE];
 
 static int getThreadIndex (void);
 
-static void addStringToBacktrace (const char* str) {
+static int addStringToBacktrace (const char* str, int strbufoff) {
   int i;
 
   i = 0;
@@ -61,16 +60,17 @@ static void addStringToBacktrace (const char* str) {
     ++strbufoff;
     ++i;
   }
+  return strbufoff;
 }
 
-static void createBacktrace (void) {
+static int createBacktrace (int strbufoff) {
   int index = getThreadIndex ();
   const char** cstack = btstack + BTSTACK_SIZE * index;
   while (btsp[index] < BTSTACK_SIZE) {
     strbuf[strbufoff] = ' ';
     ++strbufoff;
 
-    addStringToBacktrace (cstack[btsp[index]]);
+    strbufoff = addStringToBacktrace (cstack[btsp[index]], strbufoff);
     ++btsp[index];
 
     strbuf[strbufoff] = ':';
@@ -79,13 +79,14 @@ static void createBacktrace (void) {
     strbuf[strbufoff] = ' ';
     ++strbufoff;
 
-    addStringToBacktrace (cstack[btsp[index]]);
+    strbufoff = addStringToBacktrace (cstack[btsp[index]], strbufoff);
     ++btsp[index];
 
     strbuf[strbufoff] = '\n';
     ++strbufoff;
   }
   strbuf[strbufoff] = 0;
+  return strbufoff;
 }
 
 /* PRE: mutex is locked. */
@@ -112,8 +113,7 @@ static void handleFatalSignals (int sig) {
 }
 
 static void printBacktraceAndExit (void) {
-  createBacktrace ();
-  if (strbufoff > 0) {
+  if (createBacktrace (0) > 0) {
     printf ("Backtrace of the current stack:\n%s\n", strbuf);
   }
   exit (EXIT_FAILURE);
