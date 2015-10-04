@@ -21,7 +21,12 @@
 # define SKYLGE__BASE__ERRORS_INCLUDED
 
 # ifdef DEBUG_MODE
-#  define ___BTPUSH errors_push (__FILE__, __func__)
+
+#  ifndef __BESTAND__
+#   define __BESTAND__ __FILE__
+#  endif
+
+#  define ___BTPUSH errors_push (__BESTAND__, __func__)
 #  define ___BTPOP  errors_pop ()
 
 #  include <string.h>
@@ -29,7 +34,7 @@
 #  define ___CBTPUSH \
   char ___classFunc[strlen (___className) + strlen (__func__) + 3]; \
   stpcpy (stpcpy (stpcpy (___classFunc, ___className), "::"), __func__); \
-  errors_push (__FILE__, ___classFunc);
+  errors_push (__BESTAND__, ___classFunc);
 
 #  define ___CBTPOP  ___BTPOP
 
