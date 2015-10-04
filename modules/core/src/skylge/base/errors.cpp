@@ -63,18 +63,6 @@ static void addStringToBacktrace (const char* str) {
   }
 }
 
-static int copyMessagePart (int* dOffPtr, const char* sPtr, int sOff) {
-  while (!(sPtr[sOff]=='%' || sPtr[sOff]==0)) {
-    strbuf[dOffPtr[0]] = sPtr[sOff];
-    ++dOffPtr[0];
-    ++sOff;
-  }
-  if (sPtr[sOff] == '%') {
-    ++sOff;
-  }
-  return sOff;
-}
-
 static void createBacktrace (void) {
   int index = getThreadIndex ();
   const char** cstack = btstack + BTSTACK_SIZE * index;
@@ -160,48 +148,13 @@ void errors_printBacktraceFatalSignals (void) {
 }
 
 void errors_printMessageAndExit (const char* message, ...) {
-  int dOff, ival, len, sOff;
-  long unsigned int zval;
   va_list argp;
-  char* sval;
 
   pthread_mutex_lock (&mutex); /* Unlocking is not needed anymore since the thread owning the mutex here, will call exit. */
   if (!(message==NULL || message[0]==0)) {
-    dOff = 0;
-    sOff = 0;
     va_start (argp, message);
-    sOff = copyMessagePart (&dOff, message, sOff);
-    while (message[sOff] != 0) {
-      switch (message[sOff]) {
-      case 'Z': {
-        zval = va_arg (argp, long int);
-        len = sprintf (strbuf + dOff, "%lu", zval);
-        dOff += len;
-      } break;
-
-      case 'c': {
-        ival = va_arg (argp, int);
-        strbuf[dOff] = (char) ival;
-        ++dOff;
-      } break;
-
-      case 'd': {
-        ival = va_arg (argp, int);
-        len = sprintf (strbuf + dOff, "%d", ival);
-        dOff += len;
-      } break;
-
-      case 's': {
-        sval = va_arg (argp, char*);
-        len = sprintf (strbuf + dOff, "%s", sval);
-        dOff += len;
-      } break;
-      }
-      ++sOff;
-      sOff = copyMessagePart (&dOff, message, sOff);
-    }
+    vsprintf (strbuf, message, argp);
     va_end (argp); /* ANSI C requirement. */
-    strbuf[dOff] = 0;
     printf("\x1B[31;1mERROR:\n%s\x1B[0m\n", strbuf);
   } else {
     printf("\x1B[31;1mERROR\x1B[0m\n");
