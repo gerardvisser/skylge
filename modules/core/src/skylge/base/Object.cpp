@@ -24,7 +24,9 @@
 REFL_IMPL (Object)
 
 Object::Object (void) {
+#ifdef DEBUG_MODE
   m_refCountInternal = 0;
+#endif
   m_refCount = 1;
 }
 
@@ -39,7 +41,7 @@ void Object::unref (void) {
   ___CBTPUSH;
 #ifdef DEBUG_MODE
   if (m_refCountInternal == m_refCount) {
-    /* Error */
+    errors_printMessageAndExit ("m_refCount shouldn't become smaller than m_refCountInternal: try calling `unrefInternal' instead");
   }
 #endif
 
@@ -84,7 +86,7 @@ void* Object::operator new (size_t s) {
 void* Object::operator new[] (size_t s) {
   ___CBTPUSH;
 
-  /* Note: Unknown type! */
+  /* Note: Unknown type! (Introduce PTYPE_REF_COUNT_CONTAINER_ARRAY?)  */
   void* result = mem_allocate (NULL, s, PTYPE_ORDINARY);
 
   ___CBTPOP;
@@ -102,7 +104,7 @@ void Object::externalize (void) {
   ___CBTPUSH;
 
   if (m_refCountInternal == 0) {
-    /* Error */
+    errors_printMessageAndExit ("m_refCountInternal already zero");
   }
   --m_refCountInternal;
 
@@ -113,7 +115,7 @@ void Object::internalize (void) {
   ___CBTPUSH;
 
   if (m_refCountInternal == m_refCount) {
-    /* Error */
+    errors_printMessageAndExit ("m_refCount shouldn't become smaller than m_refCountInternal: maybe you should call `refInternal' instead");
   }
   ++m_refCountInternal;
 
