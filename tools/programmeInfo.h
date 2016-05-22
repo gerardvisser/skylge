@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2015 Gerard Visser.
+   Copyright (C) 2015, 2016 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,8 @@
 #ifndef PROGRAMME_INFO_INCLUDED
 #define PROGRAMME_INFO_INCLUDED
 
+#define PROGRAMME_CRYEARS "2015, 2016"
 #define PROGRAMME_NAME    "build"
-#define PROGRAMME_VERSION "2.0-SNAPSHOT"
+#define PROGRAMME_VERSION "2.0"
 
 #endif

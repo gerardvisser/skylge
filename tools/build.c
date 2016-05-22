@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2015 Gerard Visser.
+   Copyright (C) 2015, 2016 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -254,7 +254,7 @@ static void printHelp (void) {
 
 static void printVersion (void) {
   printf ("%s %s\n", PROGRAMME_NAME, PROGRAMME_VERSION);
-  printf ("Copyright (C) 2015 Gerard Visser.\n");
+  printf ("Copyright (C) %s Gerard Visser.\n", PROGRAMME_CRYEARS);
   printf ("This is free software; see the source for copying conditions.  There is NO\n");
   printf ("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n");
   exit (EXIT_SUCCESS);
