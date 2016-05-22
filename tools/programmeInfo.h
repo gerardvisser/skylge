@@ -22,6 +22,6 @@
 
 #define PROGRAMME_CRYEARS "2015, 2016"
 #define PROGRAMME_NAME    "build"
-#define PROGRAMME_VERSION "2.0"
+#define PROGRAMME_VERSION "2.1-SNAPSHOT"
 
 #endif
