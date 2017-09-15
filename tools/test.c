@@ -4,6 +4,7 @@
 #include <time.h>
 #include "buildConfig.h"
 #include "commandLineArgs.h"
+#include "errors.h"
 #include "file.h"
 #include "fileInfo.h"
 #include "libraries.h"

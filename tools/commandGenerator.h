@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2015 Gerard Visser.
+   Copyright (C) 2015, 2017 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,6 +33,6 @@ const char* commandGenerator_createArchiveCommand (commandGenerator_t* this, con
 const char* commandGenerator_createExeCommand (commandGenerator_t* this, const char* name, stringList_t* libSearchPath, stringList_t* libraries, bool strip);
 void commandGenerator_delete (commandGenerator_t* this);
 const char* commandGenerator_makeDirCommand (commandGenerator_t* this, const char* dirName);
-commandGenerator_t* commandGenerator_new (const char* objsDirectory, stringList_t* includeSearchPath, stringList_t* macros);
+commandGenerator_t* commandGenerator_new (const char* objsDirectory, stringList_t* includeSearchPath, stringList_t* macros, const char* standard);
 
 #endif

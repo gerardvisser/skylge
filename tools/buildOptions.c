@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2015 Gerard Visser.
+   Copyright (C) 2015, 2017 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@ static const char* getLibVersion (commandLineArgs_t* commandLineArgs, commandLin
 static stringList_t* getMacrosOrLibraries (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, char option);
 static int getOptimizationLevel (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, bool snapshotVersion);
 static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs, buildfile_t* buildFile, char inclOrLib);
+static const char* getStandard (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs);
 static bool isSnapshotVersion (const char* version);
 static void normalizeFilenames (buildOptions_t* this);
 static void setDevelopmentOptions (buildOptions_t* this, commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs);
@@ -60,6 +61,7 @@ void buildOptions_delete (buildOptions_t* this) {
   freeIfNecessary (this->libVersion);
   freeIfNecessary (this->libName);
   freeIfNecessary (this->exeName);
+  freeIfNecessary (this->standard);
   free (this);
 }
 
@@ -94,6 +96,7 @@ buildOptions_t* buildOptions_new (int argc, char** args) {
   result->objsDirectory = getDestinationDirectory (commandLineArgs, buildFileArgs, buildFile, 'o');
   result->includeSearchPath = getSearchPath (commandLineArgs, buildFileArgs, buildFile, 'I');
   result->optimizationLevel = getOptimizationLevel (commandLineArgs, buildFileArgs, result->snapshot);
+  result->standard = getStandard (commandLineArgs, buildFileArgs);
   setDevelopmentOptions (result, commandLineArgs, buildFileArgs);
 
   commandLineArgs_delete (commandLineArgs);
@@ -133,6 +136,7 @@ static commandLineArgs_t* getCommandLineArgs (int argc, char** args) {
                                                                         commandLineArgs_option_newStringOption ('l', NULL),
                                                                         commandLineArgs_option_newStringOption ('O', NULL),
                                                                         commandLineArgs_option_newStringOption ('o', NULL),
+                                                                        commandLineArgs_option_newStringOption ('s', NULL),
                                                                         commandLineArgs_option_newStringOption ('V', NULL),
                                                                         commandLineArgs_option_newStringOption ('x', NULL),
                                                                         commandLineArgs_option_newStringOption ('-', NULL),
@@ -367,6 +371,23 @@ static stringList_t* getSearchPath (commandLineArgs_t* commandLineArgs, commandL
   }
   result = stringList_firstElement (result);
   return result;
+}
+
+static const char* getStandard (commandLineArgs_t* commandLineArgs, commandLineArgs_t* buildFileArgs) {
+  stringList_t* list = commandLineArgs_getStringOptionValue (commandLineArgs, 's');
+  if (list == NULL & buildFileArgs != NULL) {
+    list = commandLineArgs_getStringOptionValue (buildFileArgs, 's');
+  }
+  if (list != NULL) {
+    if (stringList_length (list) > 1) {
+      errors_printMessageAndExit ("Only one standard can be specified");
+    }
+    int len = list->valueLength + 1;
+    char* result = malloc (len);
+    memcpy (result, list->value, len);
+    return result;
+  }
+  return NULL;
 }
 
 static bool isSnapshotVersion (const char* version) {

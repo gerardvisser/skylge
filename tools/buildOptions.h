@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2015 Gerard Visser.
+   Copyright (C) 2015, 2017 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@ typedef struct {
   const char* libVersion;
   const char* libName;
   const char* exeName;
+  const char* standard;
   int optimizationLevel;
   bool snapshot;
   bool clean;

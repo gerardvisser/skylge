@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2015 Gerard Visser.
+   Copyright (C) 2015, 2017 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -118,11 +118,15 @@ const char* commandGenerator_makeDirCommand (commandGenerator_t* this, const cha
   return stringBuilder_getBuffer (this->buffer);
 }
 
-commandGenerator_t* commandGenerator_new (const char* objsDirectory, stringList_t* includeSearchPath, stringList_t* macros) {
+commandGenerator_t* commandGenerator_new (const char* objsDirectory, stringList_t* includeSearchPath, stringList_t* macros, const char* standard) {
   commandGenerator_t* result = malloc (sizeof (commandGenerator_t));
   result->buffer = stringBuilder_new (4096);
 
   stringBuilder_append (result->buffer, buildConfig_compiler ());
+  if (standard != NULL) {
+    stringBuilder_append (result->buffer, " -std=");
+    stringBuilder_append (result->buffer, standard);
+  }
   stringBuilder_append (result->buffer, " -pthread -c ");
   while (includeSearchPath != NULL) {
     stringBuilder_appendChars (result->buffer, "-I", 2);

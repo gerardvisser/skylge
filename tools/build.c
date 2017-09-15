@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2015, 2016 Gerard Visser.
+   Copyright (C) 2015, 2016, 2017 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ int main (int argc, char** args, char** env) {
   handleSpecialOptions (argc, args);
 
   buildOptions_t* options = buildOptions_new (argc, args);
-  commandGenerator_t* commandGenerator = commandGenerator_new (options->objsDirectory, options->includeSearchPath, options->macros);
+  commandGenerator_t* commandGenerator = commandGenerator_new (options->objsDirectory, options->includeSearchPath, options->macros, options->standard);
 
   dryRun = options->dryRun;
   if (options->showConfig) {
@@ -245,6 +245,7 @@ static void printHelp (void) {
   printf ("  -O <level>               Set optimization level. Possible values are: 0, 1, 2,\n");
   printf ("                           3, fast, s.\n");
   printf ("  -o <directory>           Place the object files in <directory>.\n");
+  printf ("  -s <standard>            Assume that the input sources are for <standard>.\n");
   printf ("  -V <version>             Specifies the version of the library being created:\n");
   printf ("                           used in combination with option -a.\n");
   printf ("  -x <file>                Creates an executable <file>.\n");
