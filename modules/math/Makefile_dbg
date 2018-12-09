@@ -1,0 +1,32 @@
+version := 0.1-SNAPSHOT
+libname := liblimf-d.$(version).a
+
+cc := c++
+objdir := objsdbg
+includedirs := -Iinclude
+compiler_flags := -std=c++11 -pthread -DDEBUG_MODE -DCAL_B=6
+libdir := ../lib
+
+files := $(shell find src -name *.cpp)
+objects := $(addprefix $(objdir)/, $(patsubst %.cpp,%.o, $(notdir $(files))))
+
+empty :=
+space := $(empty) $(empty)
+VPATH := $(subst $(space),:,$(shell find src -type d))
+
+.PHONY: clean
+
+$(objdir)/%.o: %.cpp | $(objdir)
+	$(cc) $(compiler_flags) -c $(includedirs) -o $@ $<
+
+$(libdir)/$(libname): $(objects) | $(libdir)
+	ar rcs $@ $?
+
+clean:
+	-rm $(objdir)/*
+
+$(objdir):
+	mkdir -p $(objdir)
+
+$(libdir):
+	mkdir -p $(libdir)
