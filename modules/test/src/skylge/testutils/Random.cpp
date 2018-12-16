@@ -27,8 +27,13 @@ static const int max[] = {
   0x0100, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x4000, 0x8000, 0x10000
 };
 
+static bool initialised = false;
+
 Random::Random (void) {
-  srand (time (nullptr));
+  if (!initialised) {
+    srand (time (nullptr));
+    initialised = true;
+  }
 }
 
 int64_t Random::bits (int count) {
@@ -54,6 +59,10 @@ int64_t Random::bits (int count) {
 
 double Random::nextDouble (void) {
   return rand () / (RAND_MAX + 1.0);
+}
+
+int Random::nextInt (int bound) {
+  return (int) (bound * nextDouble ());
 }
 
 int Random::nextInt (void) {
