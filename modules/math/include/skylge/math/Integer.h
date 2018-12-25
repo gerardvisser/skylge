@@ -41,6 +41,9 @@ public:
   operator int64_t ();
   operator int ();
 
+  bool operator== (const Integer& other) const;
+  bool operator!= (const Integer& other) const;
+
   int bsf (void) const;
   int bsr (void) const;
   bool getBit (int bitNo) const;

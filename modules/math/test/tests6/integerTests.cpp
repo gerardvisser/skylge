@@ -89,13 +89,103 @@ static void testAssign (void) {
 }
 
 static void testCopy (void) {
+  /* TODO: IMPLEMENT */
+}
+
+static void testEqual (void) {
+  Random random;
+  Integer bigintA (4);
+  Integer bigintB (11);
+
+  const int max = 0x200000;
+  ErrorExamples errorExamples ("Error for: valA=%ld, valB=%ld\n");
+  ProgressionBar::init ("Integer::operator== (const Integer&)", max);
+  for (int i = 0; i < max; ++i) {
+    int64_t valA = random.nextInt (0x1FFFFF) - 0xFFFFF;
+    int64_t valB;
+    switch (i % 4) {
+    case 0:
+      valB = valA;
+      break;
+
+    case 1:
+      valB = -valA;
+      break;
+
+    case 2:
+      valB = random.nextInt (0x1FFFFF) - 0xFFFFF;
+      break;
+
+    case 3:
+      valB = random.nextInt ();
+      if (valA < 0)
+        valB = -valB;
+      break;
+    }
+
+    bigintA = valA;
+    bigintB = valB;
+
+    bool error = valA == valB ^ bigintA == bigintB;
+    if (error) {
+      errorExamples.add (valA, valB);
+    }
+    ProgressionBar::update (error);
+  }
+  errorExamples.print ();
+}
+
+static void testInequal (void) {
+  Random random;
+  Integer bigintA (4);
+  Integer bigintB (11);
+
+  const int max = 0x200000;
+  ErrorExamples errorExamples ("Error for: valA=%ld, valB=%ld\n");
+  ProgressionBar::init ("Integer::operator!= (const Integer&)", max);
+  for (int i = 0; i < max; ++i) {
+    int64_t valA = random.nextInt (0x1FFFFF) - 0xFFFFF;
+    int64_t valB;
+    switch (i % 4) {
+    case 0:
+      valB = valA;
+      break;
+
+    case 1:
+      valB = -valA;
+      break;
+
+    case 2:
+      valB = random.nextInt (0x1FFFFF) - 0xFFFFF;
+      break;
+
+    case 3:
+      valB = random.nextInt ();
+      if (valA < 0)
+        valB = -valB;
+      break;
+    }
+
+    bigintA = valA;
+    bigintB = valB;
+
+    bool error = valA != valB ^ bigintA != bigintB;
+    if (error) {
+      errorExamples.add (valA, valB);
+    }
+    ProgressionBar::update (error);
+  }
+  errorExamples.print ();
 }
 
 static void testMove (void) {
+  /* TODO: IMPLEMENT */
 }
 
 const test_fn_t integerTests[] = {
   testAssign,
+  testEqual,
+  testInequal,
   testCopy,
   testMove
 };

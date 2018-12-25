@@ -27,8 +27,6 @@
 #define MIN_SIZE 2
 
 /* Do we need:
-bool Integer::operator== (const Integer& other) const;
-bool Integer::operator!= (const Integer& other) const;
 bool Integer::operator< (const Integer& other) const;
 bool Integer::operator<= (const Integer& other) const;
 bool Integer::operator> (const Integer& other) const;
@@ -163,6 +161,23 @@ Integer::operator int () {
 #endif
 
   return result;
+}
+
+bool Integer::operator== (const Integer& other) const {
+  VALIDATE_INTEGER ("Integer::operator==(const Integer&)", *this, LOC_BEFORE);
+  VALIDATE_INTEGER ("Integer::operator==(const Integer&)", other, LOC_BEFORE);
+
+  if (!(m_sign == other.m_sign && m_max == other.m_max))
+    return false;
+  for (int i = 0; i < m_max; ++i) {
+    if (m_buf[i] != other.m_buf[i])
+      return false;
+  }
+  return true;
+}
+
+bool Integer::operator!= (const Integer& other) const {
+  return !(*this == other);
 }
 
 
