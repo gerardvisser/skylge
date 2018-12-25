@@ -17,15 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include <stdio.h>
-#include <skylge/testutils/ErrorExamples.h>
-#include <skylge/testutils/Random.h>
+#include <skylge/testutils/testRunner.h>
+#include "integerTests.h"
 
 int main (int argc, char** args, char** env) {
-  Random random;
-  ErrorExamples x ("Error for: bigintA = %ld (valA = 0x%07lX),  bigintB = %ld (valB = 0x%07lX)\n");
-  x.add (random.bits (28), random.bits (28), random.bits (28), random.bits (28));
-  x.add (random.bits (28), random.bits (28), random.bits (28), random.bits (28));
-  x.print ();
+  RUN_TESTS (integerTests);
   return 0;
 }

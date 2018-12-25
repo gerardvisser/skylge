@@ -61,30 +61,39 @@ Integer::~Integer (void) {
 }
 
 Integer& Integer::operator= (const Integer& other) {
+  VALIDATE_INTEGER ("Integer::operator=(const Integer&)", *this, LOC_BEFORE);
+  VALIDATE_INTEGER ("Integer::operator=(const Integer&)", other, LOC_BEFORE);
+
   if (this == &other)
     return *this;
   free (m_buf); /* Niet altijd nodig... */
   copy (other);
+
+  VALIDATE_INTEGER ("Integer::operator=(const Integer&)", *this, LOC_AFTER);
   return *this;
 }
 
 Integer& Integer::operator= (Integer&& other) {
+  VALIDATE_INTEGER ("Integer::operator=(Integer&&)", *this, LOC_BEFORE);
+  VALIDATE_INTEGER ("Integer::operator=(Integer&&)", other, LOC_BEFORE);
+
   if (this == &other)
     return *this;
   free (m_buf);
   move (other);
+
+  VALIDATE_INTEGER ("Integer::operator=(Integer&&)", *this, LOC_AFTER);
   return *this;
 }
 
-Integer& Integer::operator= (int64_t val) {
+Integer& Integer::operator= (int64_t value) {
   VALIDATE_INTEGER ("Integer::operator=(int64_t)", *this, LOC_BEFORE);
 
-  m_sign = val < 0;
-  if (m_sign)
-    val = -val;
+  m_sign = value < 0;
+  uint64_t val = m_sign ? -value : value;
 
 #ifdef DEBUG_MODE
-  if (val >> CAL_B * m_size > 0) {
+  if (CAL_B * m_size < 64 && val >> CAL_B * m_size != 0) {
     PRINT_MESSAGE_AND_EXIT ("[Integer::operator=(int64_t)] The magnitude of argument `val' is too large.\n");
   }
 #endif
