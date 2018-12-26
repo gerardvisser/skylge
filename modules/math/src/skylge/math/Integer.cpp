@@ -64,8 +64,12 @@ Integer& Integer::operator= (const Integer& other) {
 
   if (this == &other)
     return *this;
-  free (m_buf); /* Niet altijd nodig... */
-  copy (other);
+  if (other.m_max <= m_size) {
+    copyUsingExistingBuffer (other);
+  } else {
+    free (m_buf);
+    copy (other);
+  }
 
   VALIDATE_INTEGER ("Integer::operator=(const Integer&)", *this, LOC_AFTER);
   return *this;
@@ -77,8 +81,12 @@ Integer& Integer::operator= (Integer&& other) {
 
   if (this == &other)
     return *this;
-  free (m_buf);
-  move (other);
+  if (other.m_max <= m_size) {
+    copyUsingExistingBuffer (other);
+  } else {
+    free (m_buf);
+    move (other);
+  }
 
   VALIDATE_INTEGER ("Integer::operator=(Integer&&)", *this, LOC_AFTER);
   return *this;
@@ -283,6 +291,15 @@ void Integer::copy (const Integer& other) {
   size_t bsize = m_size << 3;
   m_buf = (uint64_t*) malloc (bsize);
   memcpy (m_buf, other.m_buf, bsize);
+}
+
+void Integer::copyUsingExistingBuffer (const Integer& other) {
+  memcpy (m_buf, other.m_buf, other.m_max << 3);
+  if (other.m_max < m_max) {
+    memset (m_buf + other.m_max, 0, m_max - other.m_max << 3);
+  }
+  m_sign = other.m_sign;
+  m_max = other.m_max;
 }
 
 void Integer::move (Integer& other) {

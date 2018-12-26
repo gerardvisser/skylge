@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <utility>
 #include <skylge/math/Integer.h>
 #include <skylge/testutils/ErrorExamples.h>
 #include <skylge/testutils/progressionBar.h>
@@ -88,8 +89,58 @@ static void testAssign (void) {
   errorExamples.print ();
 }
 
-static void testCopy (void) {
+static void testBsf (void) {
   /* TODO: IMPLEMENT */
+}
+
+static void testBsr (void) {
+  /* TODO: IMPLEMENT */
+}
+
+static void testCopy (void) {
+  Random random;
+  Integer bigintA (4);
+  Integer bigintB (11);
+  const uint64_t* originalBuffer = bigintA.buf ();
+
+  const int max = 0x1FFFFE;
+  ErrorExamples errorExamples ("Error for: %ld\n");
+  ProgressionBar::init ("Integer::operator= (const Integer&)", max + 2);
+  for (int i = 0; i < max; ++i) {
+    int val = random.nextInt (0x1FFFFF) - 0xFFFFF;
+    bigintB = val;
+
+    bigintA = bigintB;
+
+    bool error = !(bigintA == bigintB && bigintA.size () == 4 && bigintA.buf () == originalBuffer);
+    if (error) {
+      errorExamples.add (val);
+    }
+    ProgressionBar::update (error);
+  }
+
+  /* Test self assigment.  */
+  int64_t val = 1000;
+  bigintB = val;
+  bigintA = val;
+  bigintA = bigintA;
+  bool error = !(bigintA == bigintB && bigintA.size () == 4 && bigintA.buf () == originalBuffer);
+  if (error) {
+    errorExamples.add (val);
+  }
+  ProgressionBar::update (error);
+
+  /* Test assigment of a number too large for the original buffer.  */
+  val = 1000000000000000000;
+  bigintB = val;
+  bigintA = bigintB;
+  error = !(bigintA == bigintB && bigintA.size () == 11 && bigintA.buf () != originalBuffer && bigintA.buf () != bigintB.buf ());
+  if (error) {
+    errorExamples.add (val);
+  }
+  ProgressionBar::update (error);
+
+  errorExamples.print ();
 }
 
 static void testEqual (void) {
@@ -178,7 +229,59 @@ static void testInequal (void) {
   errorExamples.print ();
 }
 
+/*
+NOOT: Wil ik zowel Integer::operator int64_t () als Integer::operator int () houden?
+ */
 static void testMove (void) {
+  Integer bigintA (4);
+  Integer* bigintB;
+  const uint64_t* originalBuffer = bigintA.buf ();
+
+  ErrorExamples errorExamples ("Error for: %ld\n");
+  ProgressionBar::init ("Integer::operator= (Integer&&)", 3);
+
+  int64_t val = 1000;
+  bigintB = new Integer (11);
+  *bigintB = val;
+  bigintA = std::move (*bigintB);
+  delete bigintB;
+  bool error = !(val == (int64_t) bigintA && bigintA.size () == 4 && bigintA.buf () == originalBuffer);
+  if (error) {
+    errorExamples.add (val);
+  }
+  ProgressionBar::update (error);
+
+  /* Test self assigment.  */
+  val = 2000;
+  bigintA = val;
+  bigintA = std::move (bigintA);
+  error = !(val == (int64_t) bigintA && bigintA.size () == 4 && bigintA.buf () == originalBuffer);
+  if (error) {
+    errorExamples.add (val);
+  }
+  ProgressionBar::update (error);
+
+  /* Test assigment of a number too large for the original buffer.  */
+  val = 1000000000000000000;
+  bigintB = new Integer (11);
+  const uint64_t* bufB = bigintB->buf ();
+  *bigintB = val;
+  bigintA = std::move (*bigintB);
+  delete bigintB;
+  error = !(val == (int64_t) bigintA && bigintA.size () == 11 && bigintA.buf () != originalBuffer && bigintA.buf () == bufB);
+  if (error) {
+    errorExamples.add (val);
+  }
+  ProgressionBar::update (error);
+
+  errorExamples.print ();
+}
+
+static void testToInt (void) {
+  /* TODO: IMPLEMENT */
+}
+
+static void testToInt64 (void) {
   /* TODO: IMPLEMENT */
 }
 
@@ -187,5 +290,9 @@ const test_fn_t integerTests[] = {
   testEqual,
   testInequal,
   testCopy,
+  testBsf,
+  testBsr,
+  testToInt,
+  testToInt64,
   testMove
 };

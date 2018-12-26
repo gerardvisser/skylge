@@ -68,6 +68,7 @@ private:
   void setMax (int fromIndex);
 
   void copy (const Integer& other);
+  void copyUsingExistingBuffer (const Integer& other);
   void move (Integer& other);
 };
 
