@@ -72,8 +72,12 @@ void ErrorExamples::add (int64_t val, ...) {
   }
 }
 
+bool ErrorExamples::empty (void) const {
+  return m_exampleCount == 0;
+}
+
 void ErrorExamples::print (void) const {
-  if (m_exampleCount > 0) {
+  if (!empty ()) {
     switch (m_dataPerExample) {
     case 1:
       for (int i = 0; i < m_exampleCount; ++i) {

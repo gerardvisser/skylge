@@ -28,12 +28,12 @@
 
 #if CAL_B == 6
 
-# define CAL_Q(x) (6 * x)
+# define CAL_Q(x) (x / 6)
 # define CAL_R(x) (x % 6)
 
 #elif CAL_B == 32
 
-# define CAL_Q(x) (x << 5)
+# define CAL_Q(x) (x >> 5)
 # define CAL_R(x) (x & 0x1F)
 
 #else

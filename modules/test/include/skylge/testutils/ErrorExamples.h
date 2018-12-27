@@ -40,6 +40,7 @@ public:
   ErrorExamples& operator= (ErrorExamples&&) = delete;
 
   void add (int64_t val, ...);
+  bool empty (void) const;
   void print (void) const;
 };
 

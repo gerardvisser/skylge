@@ -22,7 +22,8 @@
 
 #define RUN_TESTS(x) TestRunner::run (x, sizeof (x) / sizeof (void*))
 
-typedef void (* test_fn_t) (void);
+/* A test function is expected to return false on success.  */
+typedef bool (* test_fn_t) (void);
 
 namespace TestRunner {
   void run (const test_fn_t* tests, int testCount);

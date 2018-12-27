@@ -251,15 +251,180 @@ int Integer::bsr (void) const {
 }
 
 bool Integer::getBit (int bitNo) const {
-  /* TODO: IMPLEMENT */
+  VALIDATE_INTEGER ("Integer::getBit(int)", *this, LOC_BEFORE);
+
+  int r = CAL_R (bitNo);
+  int q = CAL_Q (bitNo);
+
+#ifdef DEBUG_MODE
+  if (bitNo < 0 || q >= m_size) {
+    PRINT_MESSAGE_AND_EXIT ("[Integer::getBit(int)] Argument 'bitNo' out of bounds.\n");
+  }
+#endif
+
+  return (m_buf[q] & CAL_SMASK[r]) != 0;
 }
 
 void Integer::lshl (Integer& incomingBits, int x) {
-  /* TODO: IMPLEMENT */
+  VALIDATE_INTEGER ("Integer::lshl(Integer&, int)", *this, LOC_BEFORE);
+  VALIDATE_INTEGER ("Integer::lshl(Integer&, int)", incomingBits, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (m_size != incomingBits.m_size) {
+    PRINT_MESSAGE_AND_EXIT ("[Integer::lshl(Integer&, int)] m_size should be equal to incomingBits.m_size.\n");
+  }
+#endif
+
+  if (x > 0) {
+    const int n = m_size - 1;
+    const int q = CAL_Q (x);
+    const int r = CAL_R (x);
+    int zh;
+
+    if (r > 0) {
+
+      if (m_max > n - q)
+        zh = n;
+      else
+        zh = q + m_max;
+      const int k = CAL_B - r;
+      int ih;
+
+      if (m_max > 0) {
+        for (ih = zh; ih > q; --ih) {
+          m_buf[ih] = m_buf[ih - q] << r;
+          m_buf[ih] |= m_buf[ih - q - 1] >> k;
+          CAL_CLEAR_CARRY (m_buf[ih]);
+        }
+        m_buf[q] = m_buf[0] << r;
+        CAL_CLEAR_CARRY (m_buf[q]);
+        --ih;
+      } else {
+        ih = -1;
+      }
+
+      if (incomingBits.m_max > 0) {
+
+        int il = n;
+        m_buf[q] |= incomingBits.m_buf[n] >> k;
+        for (ih = q - 1; ih > -1; --ih) {
+          m_buf[ih] = incomingBits.m_buf[il] << r;
+          --il;
+          m_buf[ih] |= incomingBits.m_buf[il] >> k;
+          CAL_CLEAR_CARRY (m_buf[ih]);
+        }
+
+        int zl;
+        if (incomingBits.m_max > n - q)
+          zl = n;
+        else
+          zl = q + incomingBits.m_max;
+        for (il = zl; il > q; --il) {
+          incomingBits.m_buf[il] = incomingBits.m_buf[il - q] << r;
+          incomingBits.m_buf[il] |= incomingBits.m_buf[il - q - 1] >> k;
+          CAL_CLEAR_CARRY (incomingBits.m_buf[il]);
+        }
+        incomingBits.m_buf[q] = incomingBits.m_buf[0] << r;
+        CAL_CLEAR_CARRY (incomingBits.m_buf[q]);
+        --il;
+
+        while (il > -1) {
+          incomingBits.m_buf[il] = 0;
+          --il;
+        }
+        incomingBits.setMax (zl);
+
+      } else { /* incomingBits.m_max == 0 */
+
+        while (ih > -1) {
+          m_buf[ih] = 0;
+          --ih;
+        }
+
+      }
+
+    } else { /* r == 0 */
+
+      int ih;
+      if (m_max > 0) {
+        if (m_max > n - q)
+          zh = n;
+        else
+          zh = q + m_max - 1;
+        for (ih = zh; ih >= q; --ih) {
+          m_buf[ih] = m_buf[ih - q];
+        }
+      } else {
+        ih = -1;
+        zh = q - 1;
+      }
+
+      if (incomingBits.m_max > 0) {
+
+        int il = n;
+        for (ih = q - 1; ih > -1; --ih) {
+          m_buf[ih] = incomingBits.m_buf[il];
+          --il;
+        }
+
+        int zl;
+        if (incomingBits.m_max > n - q)
+          zl = n;
+        else
+          zl = q + incomingBits.m_max - 1;
+        for (il = zl; il >= q; --il) {
+          incomingBits.m_buf[il] = incomingBits.m_buf[il - q];
+        }
+
+        while (il > -1) {
+          incomingBits.m_buf[il] = 0;
+          --il;
+        }
+        incomingBits.setMax (zl);
+
+      } else { /* incomingBits.m_max == 0 */
+
+        while (ih > -1) {
+          m_buf[ih] = 0;
+          --ih;
+        }
+
+      }
+
+    }
+    setMax (zh);
+  }
+
+  VALIDATE_INTEGER ("Integer::lshl(Integer&, int)", incomingBits, LOC_AFTER);
+  VALIDATE_INTEGER ("Integer::lshl(Integer&, int)", *this, LOC_AFTER);
 }
 
 void Integer::rcl (bool carry) {
-  /* TODO: IMPLEMENT */
+  VALIDATE_INTEGER_LAST_BIT_0 ("Integer::rcl(bool)", *this, LOC_BEFORE);
+
+  if (m_max > 0) {
+
+    const int m = m_max - 1;
+    if ((m_buf[m] & CAL_SMASK[CAL_B - 1]) != 0) {
+      m_buf[m_max] = 1;
+      ++m_max;
+    }
+    for (int i = m; i > 0; --i) {
+      m_buf[i] <<= 1;
+      CAL_CLEAR_CARRY (m_buf[i]);
+      m_buf[i] |= (m_buf[i - 1] & CAL_SMASK[CAL_B - 1]) != 0;
+    }
+    m_buf[0] <<= 1;
+    CAL_CLEAR_CARRY (m_buf[0]);
+    m_buf[0] |= carry;
+
+  } else {
+    if (carry) {
+      m_buf[0] = 1;
+      m_max = 1;
+    }
+  }
+
+  VALIDATE_INTEGER ("Integer::rcl(bool)", *this, LOC_AFTER);
 }
 
 void Integer::setMax (int fromIndex) {
@@ -272,11 +437,97 @@ void Integer::setMax (int fromIndex) {
 }
 
 void Integer::shl (int x) {
-  /* TODO: IMPLEMENT */
+  VALIDATE_INTEGER ("Integer::shl(int)", *this, LOC_BEFORE);
+
+  if (m_max > 0 && x > 0) {
+    const int n = m_size - 1;
+    const int q = CAL_Q (x);
+    const int r = CAL_R (x);
+    int i, z;
+
+    if (r > 0) {
+
+      if (m_max > n - q)
+        z = n;
+      else
+        z = q + m_max;
+      const int k = CAL_B - r;
+      for (i = z; i > q; --i) {
+        m_buf[i] = m_buf[i - q] << r;
+        m_buf[i] |= m_buf[i - q - 1] >> k;
+        CAL_CLEAR_CARRY (m_buf[i]);
+      }
+      m_buf[q] = m_buf[0] << r;
+      CAL_CLEAR_CARRY (m_buf[q]);
+      --i;
+
+    } else {
+
+      if (m_max > n - q)
+        z = n;
+      else
+        z = q + m_max - 1;
+      for (i = z; i >= q; --i) {
+        m_buf[i] = m_buf[i - q];
+      }
+
+    }
+
+    while (i > -1) {
+      m_buf[i] = 0;
+      --i;
+    }
+    setMax (z);
+  }
+
+  VALIDATE_INTEGER ("Integer::shl(int)", *this, LOC_AFTER);
 }
 
 void Integer::shr (int x) {
-  /* TODO: IMPLEMENT */
+  VALIDATE_INTEGER ("Integer::shr(int)", *this, LOC_BEFORE);
+
+  if (m_max > 0 && x > 0) {
+    const int q = CAL_Q (x);
+    const int r = CAL_R (x);
+    int z = m_max - q;
+
+    if (z > 0) {
+
+      int i;
+      const int oldMax = m_max;
+      if (r > 0) {
+
+        --z;
+        const int k = CAL_B - r;
+        for (i = 0; i < z; ++i) {
+          m_buf[i] = m_buf[i + q] >> r;
+          m_buf[i] |= m_buf[i + q + 1] << k;
+          CAL_CLEAR_CARRY (m_buf[i]);
+        }
+        m_buf[z] = m_buf[z + q] >> r;
+        m_max = m_buf[z] > 0 ? z + 1 : z;
+        ++i;
+
+      } else {
+
+        for (i = 0; i < z; ++i) {
+          m_buf[i] = m_buf[i + q];
+        }
+        m_max = z;
+
+      }
+      while (i < oldMax) {
+        m_buf[i] = 0;
+        ++i;
+      }
+
+    } else {
+      memset (m_buf, 0, m_max << 3);
+      m_max = 0;
+    }
+  }
+
+  VALIDATE_INTEGER ("Integer::shr(int)", *this, LOC_AFTER);
 }
 
 bool Integer::sign (void) const {

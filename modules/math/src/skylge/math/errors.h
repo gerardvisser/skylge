@@ -57,10 +57,24 @@
     } \
   }
 
+  /* Noot: willen we controleren of sign altijd false als waarde 0?  */
+
+
+# define VALIDATE_INTEGER_LAST_BIT_0(funcName, integerObj, beforeOrAfter) \
+  VALIDATE_INTEGER (funcName, integerObj, beforeOrAfter) \
+  { \
+    int dbg_lastBit = CAL_B * (integerObj).size () - 1; \
+    if ((integerObj).getBit (dbg_lastBit)) { \
+      PRINT_MESSAGE_AND_EXIT ("[%s][%s][tested=%s] integer's most significant bit not zero\n", \
+                              beforeOrAfter, funcName, #integerObj); \
+    } \
+  }
+
 
 #else
 
 # define VALIDATE_INTEGER(funcName, integerObj, beforeOrAfter)
+# define VALIDATE_INTEGER_LAST_BIT_0(funcName, integerObj, beforeOrAfter)
 
 #endif
 

@@ -43,6 +43,34 @@ static bool areEqual (const Integer& bigint, const int* array, bool sign) {
   return true;
 }
 
+static int bsf (int value) {
+  if (value != 0) {
+    int mask = 1;
+    int result = 0;
+    while ((value & mask) == 0) {
+      mask <<= 1;
+      ++result;
+    }
+    return result;
+  } else {
+    return 0;
+  }
+}
+
+static int bsr (int value) {
+  if (value != 0) {
+    int result = 32;
+    int mask = 0x80000000;
+    while ((value & mask) == 0) {
+      mask >>= 1;
+      --result;
+    }
+    return result;
+  } else {
+    return 0;
+  }
+}
+
 static int* setValue (int* dst, int64_t value) {
   uint64_t val = value < 0 ? -value : value;
   for (int i = 0; i < 11; ++i) {
@@ -52,7 +80,7 @@ static int* setValue (int* dst, int64_t value) {
   return dst;
 }
 
-static void testAssign (void) {
+static bool testAssign (void) {
   Random random;
   Integer bigint (11);
   int array[11];
@@ -87,17 +115,46 @@ static void testAssign (void) {
   }
 
   errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
-static void testBsf (void) {
-  /* TODO: IMPLEMENT */
+static bool testBsf (void) {
+  Integer bigint (4);
+
+  const int max = 0x200000;
+  ErrorExamples errorExamples ("Error for: %ld\n");
+  ProgressionBar::init ("Integer::bsf (void)", max);
+  for (int i = 0; i < max; ++i) {
+    bigint = i;
+    bool error = bigint.bsf () != bsf (i);
+    if (error) {
+      errorExamples.add (i);
+    }
+    ProgressionBar::update (error);
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
-static void testBsr (void) {
-  /* TODO: IMPLEMENT */
+static bool testBsr (void) {
+  Integer bigint (4);
+
+  const int max = 0x200000;
+  ErrorExamples errorExamples ("Error for: %ld\n");
+  ProgressionBar::init ("Integer::bsr (void)", max);
+  for (int i = 0; i < max; ++i) {
+    bigint = i;
+    bool error = bigint.bsr () != bsr (i);
+    if (error) {
+      errorExamples.add (i);
+    }
+    ProgressionBar::update (error);
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
-static void testCopy (void) {
+static bool testCopy (void) {
   Random random;
   Integer bigintA (4);
   Integer bigintB (11);
@@ -141,9 +198,10 @@ static void testCopy (void) {
   ProgressionBar::update (error);
 
   errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
-static void testEqual (void) {
+static bool testEqual (void) {
   Random random;
   Integer bigintA (4);
   Integer bigintB (11);
@@ -184,9 +242,10 @@ static void testEqual (void) {
     ProgressionBar::update (error);
   }
   errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
-static void testInequal (void) {
+static bool testInequal (void) {
   Random random;
   Integer bigintA (4);
   Integer bigintB (11);
@@ -227,12 +286,13 @@ static void testInequal (void) {
     ProgressionBar::update (error);
   }
   errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 /*
 NOOT: Wil ik zowel Integer::operator int64_t () als Integer::operator int () houden?
  */
-static void testMove (void) {
+static bool testMove (void) {
   Integer bigintA (4);
   Integer* bigintB;
   const uint64_t* originalBuffer = bigintA.buf ();
@@ -275,14 +335,17 @@ static void testMove (void) {
   ProgressionBar::update (error);
 
   errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
-static void testToInt (void) {
+static bool testToInt (void) {
   /* TODO: IMPLEMENT */
+  return false;
 }
 
-static void testToInt64 (void) {
+static bool testToInt64 (void) {
   /* TODO: IMPLEMENT */
+  return false;
 }
 
 const test_fn_t integerTests[] = {
