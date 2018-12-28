@@ -80,6 +80,26 @@ static int* setValue (int* dst, int64_t value) {
   return dst;
 }
 
+static bool testAbsAdd (void) {
+  /* TODO: IMPLEMENT */
+  return false;
+}
+
+static bool testAbsDec (void) {
+  /* TODO: IMPLEMENT */
+  return false;
+}
+
+static bool testAbsInc (void) {
+  /* TODO: IMPLEMENT */
+  return false;
+}
+
+static bool testAbsSub (void) {
+  /* TODO: IMPLEMENT */
+  return false;
+}
+
 static bool testAssign (void) {
   Random random;
   Integer bigint (11);
@@ -245,6 +265,30 @@ static bool testEqual (void) {
   return !errorExamples.empty ();
 }
 
+static bool testGetBit (void) {
+  Integer bigint (3);
+
+  const int max = 0x40000;
+  ErrorExamples errorExamples ("Error for: %05lX, bitNo=%ld\n");
+  ProgressionBar::init ("Integer::getBit (int)", 18 * max);
+  for (int i = 0; i < max; ++i) {
+    bigint = i;
+
+    int mask = 1;
+    for (int j = 0; j < 18; ++j) {
+      bool expectedBit = (i & mask) != 0;
+      bool error = bigint.getBit (j) != expectedBit;
+      if (error) {
+        errorExamples.add (i, (int64_t) j);
+      }
+      ProgressionBar::update (error);
+      mask <<= 1;
+    }
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
+}
+
 static bool testInequal (void) {
   Random random;
   Integer bigintA (4);
@@ -287,6 +331,11 @@ static bool testInequal (void) {
   }
   errorExamples.print ();
   return !errorExamples.empty ();
+}
+
+static bool testLshl (void) {
+  /* TODO: IMPLEMENT */
+  return false;
 }
 
 /*
@@ -338,14 +387,160 @@ static bool testMove (void) {
   return !errorExamples.empty ();
 }
 
-static bool testToInt (void) {
+static bool testRcl (void) {
   /* TODO: IMPLEMENT */
   return false;
 }
 
+static bool testShl (void) {
+  Random random;
+  Integer bigint (5);
+
+  const int max = 0x200000;
+  ErrorExamples errorExamples ("Error for: %08lX, %ld bits to shift.\n");
+  ProgressionBar::init ("Integer::shl (int)", max);
+  for (int i = 0; i < max; ++i) {
+    int x = random.nextInt (31);
+    int val = random.bits (30);
+    bigint = val;
+
+    bigint.shl (x);
+    int expected = val << x & 0x3FFFFFFF;
+
+    bool error = (int) bigint != expected;
+    if (error) {
+      errorExamples.add (val, (int64_t) x);
+    }
+    ProgressionBar::update (error);
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
+}
+
+static bool testShr (void) {
+  Random random;
+  Integer bigint (5);
+
+  const int max = 0x200000;
+  ErrorExamples errorExamples ("Error for: %08lX, %ld bits to shift.\n");
+  ProgressionBar::init ("Integer::shr (int)", max);
+  for (int i = 0; i < max; ++i) {
+    int x = random.nextInt (31);
+    int val = random.bits (30);
+    bigint = val;
+
+    bigint.shr (x);
+    int expected = val >> x;
+
+    bool error = (int) bigint != expected;
+    if (error) {
+      errorExamples.add (val, (int64_t) x);
+    }
+    ProgressionBar::update (error);
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
+}
+
+static bool testToInt (void) {
+  Integer bigint (11);
+  bool error;
+
+  const int max = 0x1FFFFF;
+  ErrorExamples errorExamples ("Error for: %ld\n");
+  ProgressionBar::init ("Integer::operator int ()", max + 6);
+  for (int i = 0; i < max; ++i) {
+    int val = i - 0xFFFFF;
+    bigint = val;
+
+    error = (int) bigint != val;
+    if (error) {
+      errorExamples.add (val);
+    }
+    ProgressionBar::update (error);
+  }
+
+  int64_t values[] = {0x7FFFFFFFL, 0x80000000L, 0x100000000L, -0x7FFFFFFFL, -0x80000001L, -0x100000000L};
+  for (int i = 0; i < 6; ++i) {
+    bigint = values[i];
+    if (values[i] < -0x7FFFFFFFL || values[i] > 0x7FFFFFFFL)
+      error = (int) bigint != 0x80000000;
+    else
+      error = (int) bigint != values[i];
+    if (error) {
+      errorExamples.add (values[i]);
+    }
+    ProgressionBar::update (error);
+  }
+
+  errorExamples.print ();
+  return !errorExamples.empty ();
+}
+
 static bool testToInt64 (void) {
-  /* TODO: IMPLEMENT */
-  return false;
+  Integer bigint (11);
+  bool error;
+
+  const int max = 0x1FFFFF;
+  ErrorExamples errorExamples ("Error for: %ld\n");
+  ProgressionBar::init ("Integer::operator int64_t ()", max + 8);
+  for (int i = 0; i < max; ++i) {
+    int val = i - 0xFFFFF;
+    bigint = val;
+
+    error = (int64_t) bigint != val;
+    if (error) {
+      errorExamples.add (val);
+    }
+    ProgressionBar::update (error);
+  }
+
+  int64_t values[] = {0x6518800000000000, 0x7FFFFFFFFFFFFFFF, -0x6518800000000000, -0x7FFFFFFFFFFFFFFF};
+  for (int i = 0; i < 4; ++i) {
+    bigint = values[i];
+    error = (int64_t) bigint != values[i];
+    if (error) {
+      errorExamples.add (values[i]);
+    }
+    ProgressionBar::update (error);
+  }
+
+  uint64_t* buf = (uint64_t*) bigint.buf ();
+
+  bigint = 1;
+  buf[10] = 0x08;
+  bigint.setMax (10);
+  error = (int64_t) bigint != 0x8000000000000000;
+  if (error) {
+    errorExamples.add (0x8000000000000000);
+  }
+  ProgressionBar::update (error);
+
+  buf[10] = 0x1C;
+  error = (int64_t) bigint != 0x8000000000000000;
+  if (error) {
+    errorExamples.add (0x8000000000000000);
+  }
+  ProgressionBar::update (error);
+
+  bigint = -1;
+  buf[10] = 0x08;
+  bigint.setMax (10);
+  error = (int64_t) bigint != 0x8000000000000000;
+  if (error) {
+    errorExamples.add (0x8000000000000000);
+  }
+  ProgressionBar::update (error);
+
+  buf[10] = 0x1C;
+  error = (int64_t) bigint != 0x8000000000000000;
+  if (error) {
+    errorExamples.add (0x8000000000000000);
+  }
+  ProgressionBar::update (error);
+
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 const test_fn_t integerTests[] = {
@@ -357,5 +552,14 @@ const test_fn_t integerTests[] = {
   testBsr,
   testToInt,
   testToInt64,
-  testMove
+  testMove,
+  testGetBit,
+  testShl,
+  testShr,
+  testRcl,
+  testLshl,
+  testAbsAdd,
+  testAbsDec,
+  testAbsInc,
+  testAbsSub
 };
