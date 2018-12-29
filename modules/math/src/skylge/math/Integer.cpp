@@ -190,20 +190,75 @@ bool Integer::operator!= (const Integer& other) const {
 
 
 bool Integer::absAdd (const Integer& other) {
+  VALIDATE_INTEGER ("Integer::absAdd(const Integer&)", *this, LOC_BEFORE);
+  VALIDATE_INTEGER ("Integer::absAdd(const Integer&)", other, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (m_size != other.m_size) {
+    PRINT_MESSAGE_AND_EXIT ("[Integer::absAdd(const Integer&)] m_size should be equal to other.m_size.\n");
+  }
+#endif
+
+
   /* TODO: IMPLEMENT */
+
+
+  VALIDATE_INTEGER ("Integer::absAdd(const Integer&)", *this, LOC_AFTER);
+  return false;
 }
 
 bool Integer::absDec (void) {
-  /* TODO: IMPLEMENT */
+  VALIDATE_INTEGER ("Integer::absDec(void)", *this, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (m_max == 0) {
+    PRINT_MESSAGE_AND_EXIT ("[Integer::absDec(void)] This function may never be called when m_max is 0.\n");
+  }
+#endif
+
+  int i = 0;
+  while (m_buf[i] == 0) {
+    m_buf[i] = CAL_LMASK[0];
+    ++i;
+  }
+  --m_buf[i];
+  if (m_buf[i] == 0 && i == m_max - 1) {
+    --m_max;
+    if (m_max == 0)
+      m_sign = false;
+  }
+
+  VALIDATE_INTEGER ("Integer::absDec(void)", *this, LOC_AFTER);
+  return false;
 }
 
 bool Integer::absInc (void) {
-  /* TODO: IMPLEMENT */
+  VALIDATE_INTEGER ("Integer::absInc(void)", *this, LOC_BEFORE);
+
+  int i = 0;
+  while (i < m_size && m_buf[i] == CAL_LMASK[0]) {
+    m_buf[i] = 0;
+    ++i;
+  }
+  bool carry = i == m_size;
+  if (carry) {
+    m_max = 0;
+  } else {
+    ++m_buf[i];
+    if (i == m_max)
+      ++m_max;
+  }
+
+  VALIDATE_INTEGER ("Integer::absInc(void)", *this, LOC_AFTER);
+  return carry;
 }
 
 bool Integer::absSub (const Integer& other) {
   VALIDATE_INTEGER ("Integer::absSub(const Integer&)", *this, LOC_BEFORE);
   VALIDATE_INTEGER ("Integer::absSub(const Integer&)", other, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (m_size != other.m_size) {
+    PRINT_MESSAGE_AND_EXIT ("[Integer::absSub(const Integer&)] m_size should be equal to other.m_size.\n");
+  }
+#endif
 
 
   /* TODO: IMPLEMENT */

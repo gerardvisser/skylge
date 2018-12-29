@@ -81,23 +81,124 @@ static int* setValue (int* dst, int64_t value) {
 }
 
 static bool testAbsAdd (void) {
-  /* TODO: IMPLEMENT */
-  return false;
+  Random random;
+  Integer bigintA (5);
+  Integer bigintB (5);
+
+  const int max = 4116;
+  ErrorExamples errorExamples ("Error for: A=%ld (abs(A)=0x%08lX), B=%ld (abs(B)=0x%08lX).\n");
+  ProgressionBar::init ("Integer::absAdd (const Integer&)", 27 * 27 * max);
+  for (int i = 4; i <= 30; ++i) {
+    for (int j = 4; j <= 30; ++j) {
+      for (int k = 0; k < max; ++k) {
+        int64_t valA = random.bits (i);
+        int64_t valB = random.bits (j);
+        int signA = valA != 0 ? ((k & 2) != 0 ? -1 : 1) : 1;
+        int signB = (k & 1) != 0 ? -1 : 1;
+        bigintA = signA * valA;
+        bigintB = signB * valB;
+
+        int expectedSum = valA + valB;
+        bool expectedCarry = (expectedSum & 0x40000000) != 0;
+        expectedSum = signA * (expectedSum & 0x3FFFFFFF);
+
+        bool carry = bigintA.absAdd (bigintB);
+
+        bool error = !(carry == expectedCarry && (int) bigintA == expectedSum);
+        if (error) {
+          errorExamples.add (signA * valA, valA, signB * valB, valB);
+        }
+        ProgressionBar::update (error);
+      }
+    }
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testAbsDec (void) {
-  /* TODO: IMPLEMENT */
-  return false;
+  Integer bigint (3);
+
+  const int max = 0x3FFFF;
+  ErrorExamples errorExamples ("Error for: %ld\n");
+  ProgressionBar::init ("Integer::absDec(void)", 2 * max);
+  for (int s = 0; s < 2; ++s) {
+    for (int i = 1; i <= max; ++i) {
+      bigint = s ? -i : i;
+
+      bool carry = bigint.absDec ();
+      int expectedResult = s ? -(i - 1) : i - 1;
+
+      bool error = !(!carry && (int) bigint == expectedResult && bigint.sign () == expectedResult < 0);
+      if (error) {
+        errorExamples.add (s ? -i : i);
+      }
+      ProgressionBar::update (error);
+    }
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testAbsInc (void) {
-  /* TODO: IMPLEMENT */
-  return false;
+  Integer bigint (3);
+
+  const int max = 0x40000;
+  ErrorExamples errorExamples ("Error for: %ld\n");
+  ProgressionBar::init ("Integer::absInc(void)", 2 * max);
+  for (int s = 0; s < 2; ++s) {
+    for (int i = 0; i < max; ++i) {
+      bigint = s ? -i : i;
+
+      bool carry = bigint.absInc ();
+      int expectedResult = i + 1 & 0x3FFFF;
+      if (s && expectedResult != 1)
+        expectedResult = -expectedResult;
+
+      bool error = !(carry == (i == 0x3FFFF) && (int) bigint == expectedResult);
+      if (error) {
+        errorExamples.add (s ? -i : i);
+      }
+      ProgressionBar::update (error);
+    }
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testAbsSub (void) {
-  /* TODO: IMPLEMENT */
-  return false;
+  Random random;
+  Integer bigintA (5);
+  Integer bigintB (5);
+
+  const int max = 4116;
+  ErrorExamples errorExamples ("Error for: A=%ld (abs(A)=0x%08lX), B=%ld (abs(B)=0x%08lX).\n");
+  ProgressionBar::init ("Integer::absSub (const Integer&)", 27 * 27 * max);
+  for (int i = 4; i <= 30; ++i) {
+    for (int j = 4; j <= 30; ++j) {
+      for (int k = 0; k < max; ++k) {
+        int64_t valA = random.bits (i);
+        int64_t valB = random.bits (j);
+        int signA = valA != 0 ? ((k & 2) != 0 ? -1 : 1) : 1;
+        int signB = (k & 1) != 0 ? -1 : 1;
+        bigintA = signA * valA;
+        bigintB = signB * valB;
+
+        int expectedDiff = signA * (valA - valB);
+        bool expectedSign = expectedDiff < 0;
+
+        bool carry = bigintA.absSub (bigintB);
+
+        bool error = !(!carry && (int) bigintA == expectedDiff && bigintA.sign () == expectedSign);
+        if (error) {
+          errorExamples.add (signA * valA, valA, signB * valB, valB);
+        }
+        ProgressionBar::update (error);
+      }
+    }
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testAssign (void) {
@@ -334,8 +435,34 @@ static bool testInequal (void) {
 }
 
 static bool testLshl (void) {
-  /* TODO: IMPLEMENT */
-  return false;
+  Random random;
+  Integer bigintH (5);
+  Integer bigintL (5);
+
+  const int max = 0x200000;
+  ErrorExamples errorExamples ("Error for: H=%08lX, L=%08lX, %ld bits to shift.\n");
+  ProgressionBar::init ("Integer::lshl (Integer&, int)", max);
+  for (int i = 0; i < max; ++i) {
+    int x = random.nextInt (31);
+    int64_t val = random.bits (60);
+    int valH = val >> 30;
+    int valL = val & 0x3FFFFFFF;
+    bigintH = valH;
+    bigintL = valL;
+
+    bigintH.lshl (bigintL, x);
+    int64_t expected = val << x & 0xFFFFFFFFFFFFFFF;
+    int expectedH = expected >> 30;
+    int expectedL = expected & 0x3FFFFFFF;
+
+    bool error = !((int) bigintH == expectedH && (int) bigintL == expectedL);
+    if (error) {
+      errorExamples.add (valH, (int64_t) valL, (int64_t) x);
+    }
+    ProgressionBar::update (error);
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 /*
@@ -388,8 +515,27 @@ static bool testMove (void) {
 }
 
 static bool testRcl (void) {
-  /* TODO: IMPLEMENT */
-  return false;
+  Integer bigint (3);
+
+  const int max = 0x20000;
+  ErrorExamples errorExamples ("Error for: %05lX, carry=%ld.\n");
+  ProgressionBar::init ("Integer::rcl (bool)", 2 * max);
+  for (int c = 0; c < 2; ++c) {
+    for (int i = 0; i < max; ++i) {
+      bigint = i;
+
+      bigint.rcl (c);
+      int expected = i << 1 | c;
+
+      bool error = (int) bigint != expected;
+      if (error) {
+        errorExamples.add (i, (int64_t) c);
+      }
+      ProgressionBar::update (error);
+    }
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testShl (void) {
@@ -558,8 +704,8 @@ const test_fn_t integerTests[] = {
   testShr,
   testRcl,
   testLshl,
-  testAbsAdd,
   testAbsDec,
   testAbsInc,
+  testAbsAdd,
   testAbsSub
 };
