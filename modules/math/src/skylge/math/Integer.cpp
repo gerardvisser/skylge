@@ -198,12 +198,67 @@ bool Integer::absAdd (const Integer& other) {
   }
 #endif
 
+  bool carry = false;
+  bool otherMaxGreaterThanThisMax = other.m_max > m_max;
+  int max = otherMaxGreaterThanThisMax ? m_max : other.m_max;
+  int i;
 
-  /* TODO: IMPLEMENT */
+  for (i = 0; i < max; ++i) {
+    if (carry) {
+      CAL_CLEAR_CARRY (m_buf[i - 1]);
+      ++m_buf[i];
+    }
+    m_buf[i] += other.m_buf[i];
+    carry = CAL_CARRY (m_buf[i]);
+  }
 
+  if (otherMaxGreaterThanThisMax) {
+
+    if (carry) {
+      CAL_CLEAR_CARRY (m_buf[i - 1]);
+      while (i < other.m_max && other.m_buf[i] == CAL_LMASK[0]) {
+        ++i;
+      }
+      carry = i == m_size;
+      if (carry) {
+        setMax (m_max - 1);
+      } else {
+        m_buf[i] = other.m_buf[i] + 1;
+        ++i;
+        while (i < other.m_max) {
+          m_buf[i] = other.m_buf[i];
+          ++i;
+        }
+        m_max = i;
+      }
+    } else {
+      while (i < other.m_max) {
+        m_buf[i] = other.m_buf[i];
+        ++i;
+      }
+      m_max = other.m_max;
+    }
+
+  } else if (carry) {
+
+    CAL_CLEAR_CARRY (m_buf[i - 1]);
+    while (i < m_max && m_buf[i] == CAL_LMASK[0]) {
+      m_buf[i] = 0;
+      ++i;
+    }
+    carry = i == m_size;
+    if (carry) {
+      setMax (other.m_max - 1);
+    } else {
+      ++m_buf[i];
+      if (i == m_max)
+        ++m_max;
+    }
+
+  }
 
   VALIDATE_INTEGER ("Integer::absAdd(const Integer&)", *this, LOC_AFTER);
-  return false;
+  return carry;
 }
 
 bool Integer::absDec (void) {
@@ -260,9 +315,97 @@ bool Integer::absSub (const Integer& other) {
   }
 #endif
 
+  int i;
+  bool carry = false;
 
-  /* TODO: IMPLEMENT */
+  if (m_max > other.m_max) {
 
+    for (i = 0; i < other.m_max; ++i) {
+      if (carry) {
+        CAL_CLEAR_CARRY (m_buf[i - 1]);
+        --m_buf[i];
+      }
+      m_buf[i] -= other.m_buf[i];
+      carry = CAL_CARRY (m_buf[i]);
+    }
+    if (carry) {
+      CAL_CLEAR_CARRY (m_buf[i - 1]);
+      while (m_buf[i] == 0) {
+        m_buf[i] = CAL_LMASK[0];
+        ++i;
+      }
+      --m_buf[i];
+      if (i == m_max - 1 && m_buf[i] == 0)
+        setMax (i - 1);
+    }
+
+  } else if (m_max == other.m_max) {
+
+    for (i = 0; i < m_max; ++i) {
+      if (carry) {
+        CAL_CLEAR_CARRY (m_buf[i - 1]);
+        --m_buf[i];
+      }
+      m_buf[i] -= other.m_buf[i];
+      carry = CAL_CARRY (m_buf[i]);
+    }
+    if (carry) {
+      i = 0;
+      m_sign = !m_sign;
+      while (m_buf[i] == 0) {
+        ++i;
+      }
+      m_buf[i] ^= CAL_LMASK[0];
+      CAL_CLEAR_CARRY (m_buf[i]);
+      ++m_buf[i];
+      ++i;
+      while (i < m_max) {
+        m_buf[i] ^= CAL_LMASK[0];
+        CAL_CLEAR_CARRY (m_buf[i]);
+        ++i;
+      }
+    }
+    setMax (m_max - 1);
+    if (m_max == 0)
+      m_sign = false;
+
+  } else { /* m_max < other.m_max */
+
+    m_sign = !m_sign;
+    for (i = 0; i < m_max; ++i) {
+      if (carry) {
+        CAL_CLEAR_CARRY (m_buf[i - 1]);
+        ++m_buf[i];
+      }
+      m_buf[i] = other.m_buf[i] - m_buf[i];
+      carry = CAL_CARRY (m_buf[i]);
+    }
+    m_max = other.m_max;
+    if (carry) {
+      CAL_CLEAR_CARRY (m_buf[i - 1]);
+      while (other.m_buf[i] == 0) {
+        m_buf[i] = CAL_LMASK[0];
+        ++i;
+      }
+      m_buf[i] = other.m_buf[i] - 1;
+      if (i == other.m_max - 1) {
+        if (m_buf[i] == 0)
+          setMax (i - 1);
+      } else {
+        ++i;
+        while (i < other.m_max) {
+          m_buf[i] = other.m_buf[i];
+          ++i;
+        }
+      }
+    } else {
+      while (i < other.m_max) {
+        m_buf[i] = other.m_buf[i];
+        ++i;
+      }
+    }
+
+  }
 
   VALIDATE_INTEGER ("Integer::absSub(const Integer&)", *this, LOC_AFTER);
   return false;
