@@ -17,12 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include <skylge/testutils/testRunner.h>
-#include "integerOpsTests.h"
-#include "integerTests.h"
+#ifndef INTEGER_OPS_TESTS_INCLUDED
+#define INTEGER_OPS_TESTS_INCLUDED
 
-int main (int argc, char** args, char** env) {
-  //RUN_TESTS (integerTests);
-  RUN_TESTS (integerOpsTests);
-  return 0;
-}
+#include <skylge/testutils/testRunner.h>
+
+extern const test_fn_t integerOpsTests[8];
+
+#endif

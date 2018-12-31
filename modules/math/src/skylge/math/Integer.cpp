@@ -261,6 +261,43 @@ bool Integer::absAdd (const Integer& other) {
   return carry;
 }
 
+bool Integer::absAdd (uint64_t value) {
+  VALIDATE_INTEGER ("Integer::absAdd(uint64_t)", *this, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (value > CAL_LMASK[0]) {
+    PRINT_MESSAGE_AND_EXIT ("[Integer::absAdd(uint64_t)] The specified value should be less than or equal to %ld (0x%lX).\n", CAL_LMASK[0], CAL_LMASK[0]);
+  }
+  if (value == 0) {
+    PRINT_MESSAGE_AND_EXIT ("[Integer::absAdd(uint64_t)] The specified value should not be 0.\n");
+  }
+  if (m_max == 0) {
+    PRINT_MESSAGE_AND_EXIT ("[Integer::absAdd(uint64_t)] *this should not represent 0.\n");
+  }
+#endif
+
+  m_buf[0] += value;
+  bool carry = CAL_CARRY (m_buf[0]);
+  if (carry) {
+    int i = 1;
+    CAL_CLEAR_CARRY (m_buf[0]);
+    while (i < m_max && m_buf[i] == CAL_LMASK[0]) {
+      m_buf[i] = 0;
+      ++i;
+    }
+    carry = i == m_size;
+    if (carry) {
+      m_max = 1;
+    } else {
+      ++m_buf[i];
+      if (i == m_max)
+        ++m_max;
+    }
+  }
+
+  VALIDATE_INTEGER ("Integer::absAdd(uint64_t)", *this, LOC_AFTER);
+  return carry;
+}
+
 bool Integer::absDec (void) {
   VALIDATE_INTEGER ("Integer::absDec(void)", *this, LOC_BEFORE);
 #ifdef DEBUG_MODE
@@ -408,6 +445,54 @@ bool Integer::absSub (const Integer& other) {
   }
 
   VALIDATE_INTEGER ("Integer::absSub(const Integer&)", *this, LOC_AFTER);
+  return false;
+}
+
+bool Integer::absSub (uint64_t value) {
+  VALIDATE_INTEGER ("Integer::absSub(uint64_t)", *this, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (value > CAL_LMASK[0]) {
+    PRINT_MESSAGE_AND_EXIT ("[Integer::absSub(uint64_t)] The specified value should be less than or equal to %ld (0x%lX).\n", CAL_LMASK[0], CAL_LMASK[0]);
+  }
+  if (value == 0) {
+    PRINT_MESSAGE_AND_EXIT ("[Integer::absSub(uint64_t)] The specified value should not be 0.\n");
+  }
+  if (m_max == 0) {
+    PRINT_MESSAGE_AND_EXIT ("[Integer::absSub(uint64_t)] *this should not represent 0.\n");
+  }
+#endif
+
+  m_buf[0] -= value;
+  bool carry = CAL_CARRY (m_buf[0]);
+  if (m_max > 1) {
+
+    if (carry) {
+      int i = 1;
+      CAL_CLEAR_CARRY (m_buf[0]);
+      while (m_buf[i] == 0) {
+        m_buf[i] = CAL_LMASK[0];
+        ++i;
+      }
+      --m_buf[i];
+      if (i == m_max - 1 && m_buf[i] == 0)
+        --m_max;
+    }
+
+  } else { /* m_max == 1 */
+
+    if (carry) {
+      m_sign = !m_sign;
+      m_buf[0] ^= CAL_LMASK[0];
+      CAL_CLEAR_CARRY (m_buf[0]);
+      ++m_buf[0];
+    } else if (m_buf[0] == 0) {
+      m_max = 0;
+      m_sign = false;
+    }
+
+  }
+
+  VALIDATE_INTEGER ("Integer::absSub(uint64_t)", *this, LOC_AFTER);
   return false;
 }
 

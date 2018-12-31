@@ -45,11 +45,72 @@ IntegerOps::~IntegerOps (void) {
 }
 
 bool IntegerOps::add (Integer& dst, const Integer& src) {
-  /* TODO: IMPLEMENT */
+  VALIDATE_INTEGER ("IntegerOps::add(Integer&, const Integer&)", dst, LOC_BEFORE);
+  VALIDATE_INTEGER ("IntegerOps::add(Integer&, const Integer&)", src, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (!(dst.m_size == m_size && src.m_size == m_size)) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::add(Integer&, const Integer&)] The two arguments `dst' and `src' need to be of size %d.\n", m_size);
+  }
+#endif
+
+  bool carry;
+  if (src.m_max > 0) {
+    if (dst.m_max > 0) {
+      if (dst.m_sign ^ src.m_sign)
+        carry = dst.absSub (src);
+      else
+        carry = dst.absAdd (src);
+    } else {
+      dst = src;
+      carry = false;
+    }
+  } else {
+    carry = false;
+  }
+
+  VALIDATE_INTEGER ("IntegerOps::add(Integer&, const Integer&)", dst, LOC_AFTER);
+  return carry;
 }
 
 bool IntegerOps::add (Integer& dst, int value) {
-  /* TODO: IMPLEMENT */
+  VALIDATE_INTEGER ("IntegerOps::add(Integer&, int)", dst, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (dst.m_size != m_size) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::add(Integer&, int)] Argument `dst' needs to be of size %d.\n", m_size);
+  }
+#endif
+
+  bool carry;
+
+#if CAL_B == 6
+  if (value < -63 || value > 63) {
+    *m_aux = value;
+    carry = add (dst, *m_aux);
+  } else {
+#endif
+
+    if (value != 0) {
+      if (dst.m_max > 0) {
+        bool valueSign = value < 0;
+        uint64_t val = valueSign ? - (int64_t) value : value;
+        if (dst.m_sign ^ valueSign)
+          carry = dst.absSub (val);
+        else
+          carry = dst.absAdd (val);
+      } else {
+        dst = value;
+        carry = false;
+      }
+    } else {
+      carry = false;
+    }
+
+#if CAL_B == 6
+  }
+#endif
+
+  VALIDATE_INTEGER ("IntegerOps::add(Integer&, int)", dst, LOC_AFTER);
+  return carry;
 }
 
 void IntegerOps::baseDiv (Integer& result, const Integer& denominator, int denomBsr, int total) {
@@ -67,25 +128,116 @@ Integer IntegerOps::createInteger (int64_t value) {
 }
 
 bool IntegerOps::dec (Integer& dst) {
-  /* TODO: IMPLEMENT */
+  VALIDATE_INTEGER ("IntegerOps::dec(Integer&)", dst, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (dst.m_size != m_size) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::dec(Integer&)] Argument `dst' needs to be of size %d.\n", m_size);
+  }
+#endif
+
+  bool carry;
+  if (dst.m_max > 0) {
+    if (dst.m_sign)
+      carry = dst.absInc ();
+    else
+      carry = dst.absDec ();
+  } else {
+    dst.m_max = 1;
+    dst.m_buf[0] = 1;
+    dst.m_sign = true;
+    carry = false;
+  }
+
+  VALIDATE_INTEGER ("IntegerOps::dec(Integer&)", dst, LOC_AFTER);
+  return carry;
 }
 
 Integer& IntegerOps::div (Integer& dst, const Integer& src) {
+  VALIDATE_INTEGER ("IntegerOps::div(Integer&, const Integer&)", dst, LOC_BEFORE);
+  VALIDATE_INTEGER/*_LAST_BIT_0*/ ("IntegerOps::div(Integer&, const Integer&)", src, LOC_BEFORE);
+  /* TODO: Laatste bit zou ook niet nul moeten kunnen zijn!!! Kijk of er een aanpassing van Integer::lshl nodig is:
+           misschien moet de size van m_remainder nl. met 1 worden verhoogd. */
+#ifdef DEBUG_MODE
+  if (!(dst.m_size == m_size && src.m_size == m_size)) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::div(Integer&, const Integer&)] The two arguments `dst' and `src' need to be of size %d.\n", m_size);
+  }
+#endif
+
   /* TODO: IMPLEMENT */
+
+
+  VALIDATE_INTEGER ("IntegerOps::div(Integer&, const Integer&)", *m_remainder, LOC_AFTER);
   return *m_remainder;
 }
 
 bool IntegerOps::inc (Integer& dst) {
-  /* TODO: IMPLEMENT */
+  VALIDATE_INTEGER ("IntegerOps::inc(Integer&)", dst, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (dst.m_size != m_size) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::inc(Integer&)] Argument `dst' needs to be of size %d.\n", m_size);
+  }
+#endif
+
+  bool carry;
+  if (dst.m_max > 0) {
+    if (dst.m_sign)
+      carry = dst.absDec ();
+    else
+      carry = dst.absInc ();
+  } else {
+    dst.m_max = 1;
+    dst.m_buf[0] = 1;
+    dst.m_sign = false;
+    carry = false;
+  }
+
+  VALIDATE_INTEGER ("IntegerOps::inc(Integer&)", dst, LOC_AFTER);
+  return carry;
 }
 
 Integer& IntegerOps::mul (const Integer& srcA, const Integer& srcB) {
+  VALIDATE_INTEGER ("IntegerOps::mul(const Integer&, const Integer&)", srcA, LOC_BEFORE);
+  VALIDATE_INTEGER ("IntegerOps::mul(const Integer&, const Integer&)", srcB, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (!(srcA.m_size == m_size && srcB.m_size == m_size)) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::mul(const Integer&, const Integer&)] The two arguments `srcA' and `srcB' need to be of size %d.\n", m_size);
+  }
+#endif
+
   /* TODO: IMPLEMENT */
+
+
+  VALIDATE_INTEGER ("IntegerOps::mul(const Integer&, const Integer&)", *m_mulResult, LOC_AFTER);
   return *m_mulResult;
 }
 
 bool IntegerOps::sub (Integer& dst, const Integer& src) {
-  /* TODO: IMPLEMENT */
+  VALIDATE_INTEGER ("IntegerOps::sub(Integer&, const Integer&)", dst, LOC_BEFORE);
+  VALIDATE_INTEGER ("IntegerOps::sub(Integer&, const Integer&)", src, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (!(dst.m_size == m_size && src.m_size == m_size)) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::sub(Integer&, const Integer&)] The two arguments `dst' and `src' need to be of size %d.\n", m_size);
+  }
+#endif
+
+  bool carry;
+  if (src.m_max > 0) {
+    if (dst.m_max > 0) {
+      if (dst.m_sign ^ src.m_sign)
+        carry = dst.absAdd (src);
+      else
+        carry = dst.absSub (src);
+    } else {
+      dst = src;
+      dst.m_sign = !src.m_sign;
+      carry = false;
+    }
+  } else {
+    carry = false;
+  }
+
+  VALIDATE_INTEGER ("IntegerOps::sub(Integer&, const Integer&)", dst, LOC_AFTER);
+  return carry;
 }
 
 bool IntegerOps::subtractFromRemainder (const Integer& denominator, int denomBsr, int remainderBsr) {

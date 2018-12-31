@@ -30,7 +30,7 @@ private:
   bool m_sign;
 
 public:
-  Integer (int size);
+  explicit Integer (int size);
   Integer (const Integer& other);
   Integer (Integer&& other);
   virtual ~Integer (void);
@@ -60,9 +60,11 @@ private:
 #endif
 
   bool absAdd (const Integer& other);
+  bool absAdd (uint64_t value);
   bool absDec (void);
   bool absInc (void);
   bool absSub (const Integer& other);
+  bool absSub (uint64_t value);
   void lshl (Integer& incomingBits, int x);
   void rcl (bool carry);
   void setMax (int fromIndex);
@@ -70,6 +72,8 @@ private:
   void copy (const Integer& other);
   void copyUsingExistingBuffer (const Integer& other);
   void move (Integer& other);
+
+  friend class IntegerOps;
 };
 
 #endif

@@ -32,7 +32,7 @@ private:
   const int m_bsize;
 
 public:
-  IntegerOps (int size);
+  explicit IntegerOps (int size);
   IntegerOps (const IntegerOps&) = delete;
   IntegerOps (IntegerOps&&) = delete;
   virtual ~IntegerOps (void);
