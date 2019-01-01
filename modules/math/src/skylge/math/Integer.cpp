@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2018 Gerard Visser.
+   Copyright (C) 2018, 2019 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -267,9 +267,6 @@ bool Integer::absAdd (uint64_t value) {
   if (value > CAL_LMASK[0]) {
     PRINT_MESSAGE_AND_EXIT ("[Integer::absAdd(uint64_t)] The specified value should be less than or equal to %ld (0x%lX).\n", CAL_LMASK[0], CAL_LMASK[0]);
   }
-  if (value == 0) {
-    PRINT_MESSAGE_AND_EXIT ("[Integer::absAdd(uint64_t)] The specified value should not be 0.\n");
-  }
   if (m_max == 0) {
     PRINT_MESSAGE_AND_EXIT ("[Integer::absAdd(uint64_t)] *this should not represent 0.\n");
   }
@@ -286,7 +283,7 @@ bool Integer::absAdd (uint64_t value) {
     }
     carry = i == m_size;
     if (carry) {
-      m_max = 1;
+      m_max = m_buf[0] == 0 ? 0 : 1;
     } else {
       ++m_buf[i];
       if (i == m_max)
@@ -453,9 +450,6 @@ bool Integer::absSub (uint64_t value) {
 #ifdef DEBUG_MODE
   if (value > CAL_LMASK[0]) {
     PRINT_MESSAGE_AND_EXIT ("[Integer::absSub(uint64_t)] The specified value should be less than or equal to %ld (0x%lX).\n", CAL_LMASK[0], CAL_LMASK[0]);
-  }
-  if (value == 0) {
-    PRINT_MESSAGE_AND_EXIT ("[Integer::absSub(uint64_t)] The specified value should not be 0.\n");
   }
   if (m_max == 0) {
     PRINT_MESSAGE_AND_EXIT ("[Integer::absSub(uint64_t)] *this should not represent 0.\n");

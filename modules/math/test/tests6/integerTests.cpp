@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2018 Gerard Visser.
+   Copyright (C) 2018, 2019 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -116,6 +116,57 @@ static bool testAbsAdd (void) {
   return !errorExamples.empty ();
 }
 
+static bool testAbsAddInt (void) {
+  Random random;
+  Integer bigint (5);
+
+  const int max = 1737;
+  ErrorExamples errorExamples ("Error for: A=%ld (abs(A)=0x%08lX), B=%ld.\n");
+  ProgressionBar::init ("Integer::absAdd (uint64_t)", 64 * (27 * max + 1));
+  for (int i = 4; i <= 30; ++i) {
+    for (int j = 0; j < 64; ++j) {
+      for (int k = 0; k < max; ++k) {
+        int64_t valA = random.bits (i);
+        if (valA == 0)
+          valA = 1;
+        int signA = (k & 1) != 0 ? -1 : 1;
+        bigint = signA * valA;
+
+        int expectedSum = valA + j;
+        bool expectedCarry = (expectedSum & 0x40000000) != 0;
+        expectedSum = signA * (expectedSum & 0x3FFFFFFF);
+
+        bool carry = bigint.absAdd (j);
+
+        bool error = !(carry == expectedCarry && (int) bigint == expectedSum);
+        if (error) {
+          errorExamples.add (signA * valA, valA, (int64_t) j);
+        }
+        ProgressionBar::update (error);
+      }
+    }
+  }
+  for (int i = 0; i < 64; ++i) {
+    int64_t valA = 0x3FFFFFE2;
+    int signA = (i & 1) != 0 ? -1 : 1;
+    bigint = signA * valA;
+
+    int expectedSum = valA + i;
+    bool expectedCarry = (expectedSum & 0x40000000) != 0;
+    expectedSum = signA * (expectedSum & 0x3FFFFFFF);
+
+    bool carry = bigint.absAdd (i);
+
+    bool error = !(carry == expectedCarry && (int) bigint == expectedSum);
+    if (error) {
+      errorExamples.add (signA * valA, valA, (int64_t) i);
+    }
+    ProgressionBar::update (error);
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
+}
+
 static bool testAbsDec (void) {
   Integer bigint (3);
 
@@ -192,6 +243,39 @@ static bool testAbsSub (void) {
         bool error = !(!carry && (int) bigintA == expectedDiff && bigintA.sign () == expectedSign);
         if (error) {
           errorExamples.add (signA * valA, valA, signB * valB, valB);
+        }
+        ProgressionBar::update (error);
+      }
+    }
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
+}
+
+static bool testAbsSubInt (void) {
+  Random random;
+  Integer bigint (5);
+
+  const int max = 1737;
+  ErrorExamples errorExamples ("Error for: A=%ld (abs(A)=0x%08lX), B=%ld.\n");
+  ProgressionBar::init ("Integer::absSub (uint64_t)", 27 * 64 * max);
+  for (int i = 4; i <= 30; ++i) {
+    for (int j = 0; j < 64; ++j) {
+      for (int k = 0; k < max; ++k) {
+        int64_t valA = random.bits (i);
+        if (valA == 0)
+          valA = 1;
+        int signA = (k & 1) != 0 ? -1 : 1;
+        bigint = signA * valA;
+
+        int expectedDiff = signA * (valA - j);
+        bool expectedSign = expectedDiff < 0;
+
+        bool carry = bigint.absSub (j);
+
+        bool error = !(!carry && (int) bigint == expectedDiff && bigint.sign () == expectedSign);
+        if (error) {
+          errorExamples.add (signA * valA, valA, (int64_t) j);
         }
         ProgressionBar::update (error);
       }
@@ -707,5 +791,7 @@ const test_fn_t integerTests[] = {
   testAbsDec,
   testAbsInc,
   testAbsAdd,
-  testAbsSub
+  testAbsSub,
+  testAbsAddInt,
+  testAbsSubInt
 };
