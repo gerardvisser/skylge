@@ -31,9 +31,9 @@ static bool testAdd (void) {
   Integer bigintA = ops.createInteger ();
   Integer bigintB = ops.createInteger ();
 
-  const int max = 20000000;
+  const int max = 19999983;
   ErrorExamples errorExamples ("Error for: A=%ld, B=%ld.\n");
-  ProgressionBar::init ("IntegerOps::add (Integer&, const Integer&)", max);
+  ProgressionBar::init ("IntegerOps::add (Integer&, const Integer&)", max + 17);
   for (int i = 0; i < max; ++i) {
     int64_t valA = random.nextInt (0x1FFFFFF) - 0xFFFFFF;
     int64_t valB = random.nextInt (0x1FFFFFF) - 0xFFFFFF;
@@ -63,13 +63,95 @@ static bool testAdd (void) {
     }
     ProgressionBar::update (error);
   }
+
+  int fixedA[] = {0x27A1E, 0x0, -0x995, 0x272, -0x53C, 0xFFF16B, -0xFEC, 0x2A2F8,
+                  -0x4DD, -0x1015, 0x80367, -0xB1E, 0x58C6, -0x2AB, 0xFEC, -0xAD2,
+                  0x221};
+  int fixedB[] = {0x0, 0x42A651, -0xFFF66B, 0x3FE8C, -0x3F986, 0xE9C, -0x35, 0x1F,
+                  -0xB3E, 0xFE0, -0x651, 0x17, -0x1A786, 0x2AB, -0x1031, 0x980629,
+                  -0x1A5A};
+  for (int i = 0; i < 17; ++i) {
+    bigintA = fixedA[i];
+    bigintB = fixedB[i];
+
+    bool expectedCarry;
+    int64_t expectedSum = fixedA[i] + fixedB[i];
+    if (expectedSum > 0xFFFFFF) {
+      expectedSum &= 0xFFFFFF;
+      expectedCarry = true;
+    } else if (expectedSum == -0x1000000) {
+      expectedSum = 0;
+      expectedCarry = true;
+    } else if (expectedSum < -0x1000000) {
+      expectedSum |= 0x1000000;
+      expectedCarry = true;
+    } else {
+      expectedCarry = false;
+    }
+
+    bool carry = ops.add (bigintA, bigintB);
+
+    bool error = !(carry == expectedCarry && (int) bigintA == expectedSum);
+    if (error) {
+      errorExamples.add (fixedA[i], fixedB[i]);
+    }
+    ProgressionBar::update (error);
+  }
+
   errorExamples.print ();
   return !errorExamples.empty ();
 }
 
 static bool testAddInt (void) {
-  /* TODO: IMPLEMENT */
-  return false;
+  Random random;
+  IntegerOps ops (3);
+  Integer bigint = ops.createInteger ();
+
+  const int max = (0x40000 + 0x3FFFF) * (64 + 63) + 1;
+  ErrorExamples errorExamples ("Error for: bigint=%ld, val=%ld.\n");
+  ProgressionBar::init ("IntegerOps::add (Integer&, int)", max);
+  for (int i = -63; i < 64; ++i) {
+    for (int j = -0x3FFFF; j < 0x40000; ++j) {
+      bigint = j;
+
+      bool expectedCarry;
+      int64_t expectedSum = j + i;
+      if (expectedSum > 0x3FFFF) {
+        expectedSum &= 0x3FFFF;
+        expectedCarry = true;
+      } else if (expectedSum == -0x40000) {
+        expectedSum = 0;
+        expectedCarry = true;
+      } else if (expectedSum < -0x40000) {
+        expectedSum |= 0x40000;
+        expectedCarry = true;
+      } else {
+        expectedCarry = false;
+      }
+
+      bool carry = ops.add (bigint, i);
+
+      bool error = !(carry == expectedCarry && (int) bigint == expectedSum);
+      if (error) {
+        errorExamples.add (j, (int64_t) i);
+      }
+      ProgressionBar::update (error);
+    }
+  }
+
+  int valA = 3347;
+  int valB = 8219;
+  int expectedSum = valA + valB;
+  bigint = valA;
+  bool carry = ops.add (bigint, valB);
+  bool error = !(carry == false && (int) bigint == expectedSum);
+  if (error) {
+    errorExamples.add (valA, (int64_t) valB);
+  }
+  ProgressionBar::update (error);
+
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testCreateInteger (void) {
@@ -166,8 +248,64 @@ static bool testMul (void) {
 }
 
 static bool testSub (void) {
-  /* TODO: IMPLEMENT */
-  return false;
+  Random random;
+  IntegerOps ops (4);
+  Integer bigintA = ops.createInteger ();
+  Integer bigintB = ops.createInteger ();
+
+  const int max = 19999998;
+  ErrorExamples errorExamples ("Error for: A=%ld, B=%ld.\n");
+  ProgressionBar::init ("IntegerOps::sub (Integer&, const Integer&)", max + 2);
+  for (int i = 0; i < max; ++i) {
+    int64_t valA = random.nextInt (0x1FFFFFF) - 0xFFFFFF;
+    int64_t valB = random.nextInt (0x1FFFFFF) - 0xFFFFFF;
+    bigintA = valA;
+    bigintB = valB;
+
+    bool expectedCarry;
+    int64_t expectedDiff = valA - valB;
+    if (expectedDiff > 0xFFFFFF) {
+      expectedDiff &= 0xFFFFFF;
+      expectedCarry = true;
+    } else if (expectedDiff == -0x1000000) {
+      expectedDiff = 0;
+      expectedCarry = true;
+    } else if (expectedDiff < -0x1000000) {
+      expectedDiff |= 0x1000000;
+      expectedCarry = true;
+    } else {
+      expectedCarry = false;
+    }
+
+    bool carry = ops.sub (bigintA, bigintB);
+
+    bool error = !(carry == expectedCarry && (int) bigintA == expectedDiff);
+    if (error) {
+      errorExamples.add (valA, valB);
+    }
+    ProgressionBar::update (error);
+  }
+
+  int fixedA[] = {0x27A1E, 0x0};
+  int fixedB[] = {0x0, 0x42A651};
+  for (int i = 0; i < 2; ++i) {
+    bigintA = fixedA[i];
+    bigintB = fixedB[i];
+
+    bool expectedCarry = false;
+    int64_t expectedDiff = fixedA[i] - fixedB[i];
+
+    bool carry = ops.sub (bigintA, bigintB);
+
+    bool error = !(carry == expectedCarry && (int) bigintA == expectedDiff);
+    if (error) {
+      errorExamples.add (fixedA[i], fixedB[i]);
+    }
+    ProgressionBar::update (error);
+  }
+
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 const test_fn_t integerOpsTests[] = {
