@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2018 Gerard Visser.
+   Copyright (C) 2018, 2019 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,6 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <skylge/math/IntegerOps.h>
 #include "defs.h"
 #include "errors.h"
@@ -113,12 +116,64 @@ bool IntegerOps::add (Integer& dst, int value) {
   return carry;
 }
 
-void IntegerOps::baseDiv (Integer& result, const Integer& denominator, int denomBsr, int total) {
-  /* TODO: IMPLEMENT */
+void IntegerOps::baseDiv (Integer& result, const Integer& denominator, const int denomBsr, int total) {
+  while (total > 0) {
+    const int remainderBsr = m_remainder->bsr ();
+    if (remainderBsr == 0) {
+      int i = m_bsize - m_numerator->bsr ();
+      if (i > total)
+        i = total;
+      result.lshl (*m_numerator, i);
+      total -= i;
+      /* m_numerator's most significant bit set or no more bits left (total=0).  */
+    }
+    if (total > 0) {
+      int i = remainderBsr < denomBsr ? denomBsr - remainderBsr : 1;
+      if (i <= total) {
+        result.shl (i - 1);
+        m_remainder->lshl (*m_numerator, i);
+        bool bit = subtractFromRemainder (denominator, denomBsr, remainderBsr + i);
+        result.rcl (bit);
+        total -= i;
+      } else {
+        result.shl (total);
+        m_remainder->lshl (*m_numerator, total);
+        total = 0;
+      }
+    }
+  }
 }
 
+/* TODO: Ook testen in CAL_B=32 conditie.  */
 void IntegerOps::baseMul (const Integer& srcA, const Integer& srcB) {
-  /* TODO: IMPLEMENT */
+  for (int i = 0; i < srcA.m_max; ++i) {
+    m_mulResult->m_buf[i] += srcA.m_buf[i] * srcB.m_buf[0];
+    m_mulResult->m_buf[i + 1] = m_mulResult->m_buf[i] >> CAL_B;
+    CAL_CLEAR_CARRY (m_mulResult->m_buf[i]);
+  }
+
+  int k = srcA.m_max;
+  for (int i = 1; i < srcB.m_max; ++i) {
+    if (srcB.m_buf[i] > 0) {
+      k = i;
+      uint64_t high, low = 0;
+      for (int j = 0; j < srcA.m_max; ++j) {
+        low += srcA.m_buf[j] * srcB.m_buf[i];
+        high = low >> CAL_B;
+        CAL_CLEAR_CARRY (low);
+        m_mulResult->m_buf[k] += low;
+        if (CAL_CARRY (m_mulResult->m_buf[k])) {
+          CAL_CLEAR_CARRY (m_mulResult->m_buf[k]);
+          ++m_mulResult->m_buf[k + 1];
+        }
+        low = high;
+        ++k;
+      }
+      m_mulResult->m_buf[k] += low;
+    }
+  }
+  m_mulResult->m_sign = srcA.m_sign ^ srcB.m_sign;
+  m_mulResult->setMax (k);
 }
 
 Integer IntegerOps::createInteger (int64_t value) {
@@ -163,8 +218,40 @@ Integer& IntegerOps::div (Integer& dst, const Integer& src) {
   }
 #endif
 
-  /* TODO: IMPLEMENT */
+  if (dst.m_max > 0 && src.m_max > 0) {
 
+    const int numeratorBsr = dst.bsr ();
+    const int denominatorBsr = src.bsr ();
+
+    if (denominatorBsr <= numeratorBsr) {
+      *m_numerator = dst;
+      m_numerator->shl (m_bsize - numeratorBsr);
+      *m_remainder = 0;
+      dst = 0;
+
+      m_remainder->lshl (*m_numerator, denominatorBsr);
+      bool bit = subtractFromRemainder (src, denominatorBsr, denominatorBsr);
+      dst.rcl (bit);
+      baseDiv (dst, src, denominatorBsr, numeratorBsr - denominatorBsr);
+
+      if (dst.m_max > 0)
+        dst.m_sign = m_numerator->m_sign ^ src.m_sign;
+      if (m_remainder->m_max > 0)
+        m_remainder->m_sign = m_numerator->m_sign;
+    } else {
+      *m_remainder = dst;
+      dst = 0;
+    }
+
+  } else if (src.m_max == 0) {
+
+    /* TODO: Throw exception.  */
+    fprintf (stderr, "\nDivision by zero.\n");
+    exit (EXIT_FAILURE);
+
+  } else {
+    *m_remainder = 0;
+  }
 
   VALIDATE_INTEGER ("IntegerOps::div(Integer&, const Integer&)", *m_remainder, LOC_AFTER);
   return *m_remainder;
@@ -204,8 +291,10 @@ Integer& IntegerOps::mul (const Integer& srcA, const Integer& srcB) {
   }
 #endif
 
-  /* TODO: IMPLEMENT */
-
+  *m_mulResult = 0;
+  if (srcA.m_max > 0 && srcB.m_max > 0) {
+    baseMul (srcA, srcB);
+  }
 
   VALIDATE_INTEGER ("IntegerOps::mul(const Integer&, const Integer&)", *m_mulResult, LOC_AFTER);
   return *m_mulResult;
@@ -241,5 +330,59 @@ bool IntegerOps::sub (Integer& dst, const Integer& src) {
 }
 
 bool IntegerOps::subtractFromRemainder (const Integer& denominator, int denomBsr, int remainderBsr) {
-  /* TODO: IMPLEMENT */
+#ifdef DEBUG_MODE
+  if (denominator.bsr () != denomBsr) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::subtractFromRemainder(const Integer&, int, int)] denominator.bsr () != denomBsr.\n");
+  }
+  if (m_remainder->bsr () != remainderBsr) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::subtractFromRemainder(const Integer&, int, int)] m_remainder->bsr () != remainderBsr.\n");
+  }
+  if (!(remainderBsr == denomBsr || remainderBsr == denomBsr + 1)) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::subtractFromRemainder(const Integer&, int, int)] !(remainderBsr == denomBsr || remainderBsr == denomBsr + 1).\n");
+  }
+#endif
+
+  int i;
+  bool carry = false;
+  if (remainderBsr == denomBsr) {
+
+    for (i = 0; i < denominator.m_max; ++i) {
+      m_aux->m_buf[i] = m_remainder->m_buf[i];
+      if (carry) {
+        CAL_CLEAR_CARRY (m_remainder->m_buf[i - 1]);
+        --m_remainder->m_buf[i];
+      }
+      m_remainder->m_buf[i] -= denominator.m_buf[i];
+      carry = CAL_CARRY (m_remainder->m_buf[i]);
+    }
+    if (m_aux->m_max < denominator.m_max)
+      m_aux->m_max = denominator.m_max;
+    if (carry) {
+      memcpy (m_remainder->m_buf, m_aux->m_buf, denominator.m_max << 3);
+    } else {
+      m_remainder->setMax (i - 1);
+    }
+
+  } else {
+
+    for (i = 0; i < denominator.m_max; ++i) {
+      if (carry) {
+        CAL_CLEAR_CARRY (m_remainder->m_buf[i - 1]);
+        --m_remainder->m_buf[i];
+      }
+      m_remainder->m_buf[i] -= denominator.m_buf[i];
+      carry = CAL_CARRY (m_remainder->m_buf[i]);
+    }
+    if (carry) {
+      CAL_CLEAR_CARRY (m_remainder->m_buf[i - 1]);
+      m_remainder->m_buf[i] = 0;
+      carry = false;
+    }
+    m_remainder->setMax (i - 1);
+
+  }
+
+  VALIDATE_INTEGER ("IntegerOps::subtractFromRemainder(const Integer&, int, int)", *m_remainder, LOC_AFTER);
+  VALIDATE_INTEGER ("IntegerOps::subtractFromRemainder(const Integer&, int, int)", *m_aux, LOC_AFTER);
+  return !carry;
 }

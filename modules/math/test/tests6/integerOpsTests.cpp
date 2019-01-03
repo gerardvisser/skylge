@@ -103,7 +103,6 @@ static bool testAdd (void) {
 }
 
 static bool testAddInt (void) {
-  Random random;
   IntegerOps ops (3);
   Integer bigint = ops.createInteger ();
 
@@ -214,9 +213,37 @@ static bool testDec (void) {
   return !errorExamples.empty ();
 }
 
+/* TODO: 'division by zero'-test toevoegen. */
 static bool testDiv (void) {
-  /* TODO: IMPLEMENT */
-  return false;
+  Random random;
+  IntegerOps ops (4);
+  Integer bigintA = ops.createInteger ();
+  Integer bigintB = ops.createInteger ();
+
+  const int max = 20000000;
+  ErrorExamples errorExamples ("Error for: A=%ld, B=%ld.\n");
+  ProgressionBar::init ("IntegerOps::div (Integer&, const Integer&)", max);
+  for (int i = 0; i < max; ++i) {
+    int64_t valA = random.nextInt (0x1FFFFFF) - 0xFFFFFF;
+    int64_t valB = random.nextInt (0x1FFFFFF) - 0xFFFFFF;
+    if (valB == 0)
+      valB = 1;
+    bigintA = valA;
+    bigintB = valB;
+
+    int expectedQuotient = valA / valB;
+    int expectedRemainder = valA % valB;
+
+    Integer& remainder = ops.div (bigintA, bigintB);
+
+    bool error = !((int) bigintA == expectedQuotient && (int) remainder == expectedRemainder);
+    if (error) {
+      errorExamples.add (valA, valB);
+    }
+    ProgressionBar::update (error);
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testInc (void) {
@@ -243,8 +270,32 @@ static bool testInc (void) {
 }
 
 static bool testMul (void) {
-  /* TODO: IMPLEMENT */
-  return false;
+  Random random;
+  IntegerOps ops (4);
+  Integer bigintA = ops.createInteger ();
+  Integer bigintB = ops.createInteger ();
+
+  const int max = 20000000;
+  ErrorExamples errorExamples ("Error for: A=%ld, B=%ld.\n");
+  ProgressionBar::init ("IntegerOps::mul (const Integer&, const Integer&)", max);
+  for (int i = 0; i < max; ++i) {
+    int64_t valA = random.nextInt (0x1FFFFFF) - 0xFFFFFF;
+    int64_t valB = random.nextInt (0x1FFFFFF) - 0xFFFFFF;
+    bigintA = valA;
+    bigintB = valB;
+
+    int64_t expectedProduct = valA * valB;
+
+    Integer& result = ops.mul (bigintA, bigintB);
+
+    bool error = (int64_t) result != expectedProduct;
+    if (error) {
+      errorExamples.add (valA, valB);
+    }
+    ProgressionBar::update (error);
+  }
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testSub (void) {
