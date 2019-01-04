@@ -119,7 +119,7 @@ Integer& Integer::operator= (int64_t value) {
   return *this;
 }
 
-Integer::operator int64_t () {
+Integer::operator int64_t () const {
   VALIDATE_INTEGER ("Integer::operator int64_t()", *this, LOC_BEFORE);
 
   int64_t result;
@@ -137,7 +137,7 @@ Integer::operator int64_t () {
   return result;
 }
 
-Integer::operator int () {
+Integer::operator int () const {
   VALIDATE_INTEGER ("Integer::operator int()", *this, LOC_BEFORE);
 
   int result;

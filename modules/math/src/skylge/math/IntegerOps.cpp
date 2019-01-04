@@ -17,9 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdexcept>
 #include <skylge/math/IntegerOps.h>
 #include "defs.h"
 #include "errors.h"
@@ -207,11 +206,21 @@ bool IntegerOps::dec (Integer& dst) {
   return carry;
 }
 
+/*
+TODO:
+Er is er een probleem als we gaan delen met reële getallen. Als de meest
+significante bit van de noemer is gezet en de teller heeft ook de meest signifi-
+cante bit gezet, maar is toch kleiner, dan verdwijnt hier dat getal in de rest
+en is de berekening klaar. Bij reële getallen, echter, delen we dan door, d.w.z.
+er schuift een nul het resultaat in en de remainder wordt één naar links gescho-
+ven: de meest significante bit valt er in de huidige situatie dus vanaf en we
+verliezen informatie als dat een 1 was....
+Daarvoor moet de grootte van m_remainder met 1 worden verhoogd, maar Integer:lshl
+accepteert dat nu niet: dat moet dus worden aangepast.
+ */
 Integer& IntegerOps::div (Integer& dst, const Integer& src) {
   VALIDATE_INTEGER ("IntegerOps::div(Integer&, const Integer&)", dst, LOC_BEFORE);
-  VALIDATE_INTEGER/*_LAST_BIT_0*/ ("IntegerOps::div(Integer&, const Integer&)", src, LOC_BEFORE);
-  /* TODO: Laatste bit zou ook niet nul moeten kunnen zijn!!! Kijk of er een aanpassing van Integer::lshl nodig is:
-           misschien moet de size van m_remainder nl. met 1 worden verhoogd. */
+  VALIDATE_INTEGER ("IntegerOps::div(Integer&, const Integer&)", src, LOC_BEFORE);
 #ifdef DEBUG_MODE
   if (!(dst.m_size == m_size && src.m_size == m_size)) {
     PRINT_MESSAGE_AND_EXIT ("[IntegerOps::div(Integer&, const Integer&)] The two arguments `dst' and `src' need to be of size %d.\n", m_size);
@@ -245,9 +254,7 @@ Integer& IntegerOps::div (Integer& dst, const Integer& src) {
 
   } else if (src.m_max == 0) {
 
-    /* TODO: Throw exception.  */
-    fprintf (stderr, "\nDivision by zero.\n");
-    exit (EXIT_FAILURE);
+    throw std::runtime_error ("Division by zero.");
 
   } else {
     *m_remainder = 0;

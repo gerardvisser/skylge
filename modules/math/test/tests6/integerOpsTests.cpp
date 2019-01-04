@@ -18,6 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
+#include <string.h>
+#include <stdexcept>
 #include <string>
 #include <skylge/math/IntegerOps.h>
 #include <skylge/testutils/ErrorExamples.h>
@@ -213,16 +215,15 @@ static bool testDec (void) {
   return !errorExamples.empty ();
 }
 
-/* TODO: 'division by zero'-test toevoegen. */
 static bool testDiv (void) {
   Random random;
   IntegerOps ops (4);
   Integer bigintA = ops.createInteger ();
   Integer bigintB = ops.createInteger ();
 
-  const int max = 20000000;
+  const int max = 19999998;
   ErrorExamples errorExamples ("Error for: A=%ld, B=%ld.\n");
-  ProgressionBar::init ("IntegerOps::div (Integer&, const Integer&)", max);
+  ProgressionBar::init ("IntegerOps::div (Integer&, const Integer&)", max + 2);
   for (int i = 0; i < max; ++i) {
     int64_t valA = random.nextInt (0x1FFFFFF) - 0xFFFFFF;
     int64_t valB = random.nextInt (0x1FFFFFF) - 0xFFFFFF;
@@ -242,6 +243,29 @@ static bool testDiv (void) {
     }
     ProgressionBar::update (error);
   }
+
+  bigintA = 0;
+  bigintB = 1000;
+  Integer& remainder = ops.div (bigintA, bigintB);
+  bool error = !((int) bigintA == 0 && (int) remainder == 0);
+  if (error) {
+    errorExamples.add (0, (int64_t) 1000);
+  }
+  ProgressionBar::update (error);
+
+  bigintA = 1000;
+  bigintB = 0;
+  try {
+    ops.div (bigintA, bigintB);
+    error = true;
+  } catch (std::exception& x) {
+    error = strcmp (x.what (), "Division by zero.") != 0;
+  }
+  if (error) {
+    errorExamples.add (1000, (int64_t) 0);
+  }
+  ProgressionBar::update (error);
+
   errorExamples.print ();
   return !errorExamples.empty ();
 }

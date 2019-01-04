@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2018 Gerard Visser.
+   Copyright (C) 2018, 2019 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -38,8 +38,8 @@ public:
   Integer& operator= (const Integer& other);
   Integer& operator= (Integer&& other);
   Integer& operator= (int64_t val);
-  operator int64_t ();
-  operator int ();
+  operator int64_t () const;
+  operator int () const;
 
   bool operator== (const Integer& other) const;
   bool operator!= (const Integer& other) const;
