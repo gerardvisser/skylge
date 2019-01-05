@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include <stdlib.h>
 #include <string.h>
 #include <stdexcept>
 #include <skylge/math/IntegerOps.h>
@@ -74,6 +75,7 @@ bool IntegerOps::add (Integer& dst, const Integer& src) {
   return carry;
 }
 
+/* Modifies: m_aux.  */
 bool IntegerOps::add (Integer& dst, int value) {
   VALIDATE_INTEGER ("IntegerOps::add(Integer&, int)", dst, LOC_BEFORE);
 #ifdef DEBUG_MODE
@@ -218,6 +220,7 @@ verliezen informatie als dat een 1 was....
 Daarvoor moet de grootte van m_remainder met 1 worden verhoogd, maar Integer:lshl
 accepteert dat nu niet: dat moet dus worden aangepast.
  */
+/* Modifies: m_aux, m_remainder, m_numerator.  */
 Integer& IntegerOps::div (Integer& dst, const Integer& src) {
   VALIDATE_INTEGER ("IntegerOps::div(Integer&, const Integer&)", dst, LOC_BEFORE);
   VALIDATE_INTEGER ("IntegerOps::div(Integer&, const Integer&)", src, LOC_BEFORE);
@@ -289,6 +292,7 @@ bool IntegerOps::inc (Integer& dst) {
   return carry;
 }
 
+/* Modifies: m_mulResult.  */
 Integer& IntegerOps::mul (const Integer& srcA, const Integer& srcB) {
   VALIDATE_INTEGER ("IntegerOps::mul(const Integer&, const Integer&)", srcA, LOC_BEFORE);
   VALIDATE_INTEGER ("IntegerOps::mul(const Integer&, const Integer&)", srcB, LOC_BEFORE);
@@ -392,4 +396,83 @@ bool IntegerOps::subtractFromRemainder (const Integer& denominator, int denomBsr
   VALIDATE_INTEGER ("IntegerOps::subtractFromRemainder(const Integer&, int, int)", *m_remainder, LOC_AFTER);
   VALIDATE_INTEGER ("IntegerOps::subtractFromRemainder(const Integer&, int, int)", *m_aux, LOC_AFTER);
   return !carry;
+}
+
+static void appendChars (std::string& str, int64_t val, bool withLeadingZeros) {
+  int i;
+  char buf[18];
+
+  if (withLeadingZeros) {
+    for (i = 0; i < 18; ++i) {
+      buf[i] = val % 10 + '0';
+      val /= 10;
+    }
+  } else {
+    i = 0;
+    while (val != 0) {
+      buf[i++] = val % 10 + '0';
+      val /= 10;
+    }
+  }
+  --i;
+  while (i > -1) {
+    str += buf[i];
+    --i;
+  }
+}
+
+int IntegerOps::splitUp (int64_t* parts, Integer& value) {
+  int index = 0;
+  Integer exa = createInteger (1000000000000000000);
+  while (value.m_max > 0) {
+    Integer& remainder = div (value, exa);
+    parts[index++] = (int64_t) remainder;
+  }
+  return index - 1;
+}
+
+void IntegerOps::toString (std::string& dst, int64_t* parts, Integer& value) {
+  int i = splitUp (parts, value);
+  appendChars (dst, parts[i--], false);
+  while (i > -1) {
+    appendChars (dst, parts[i--], true);
+  }
+}
+
+/* Modifies: m_aux, m_remainder, m_numerator.  */
+std::string IntegerOps::toString (const Integer& value) {
+  VALIDATE_INTEGER ("IntegerOps::toString(const Integer&)", value, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (value.m_size != m_size) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::toString(const Integer&)] Argument `value' needs to be of size %d.\n", m_size);
+  }
+#endif
+
+  std::string result;
+  if (value.m_max == 0) {
+    result = "0";
+    return result;
+  }
+
+  /* Estimate number of digits needed.  */
+  const int digitsNeeded = (int) (0.30103 * value.bsr ()) + 1;
+  const int eighteenDigitBlocks = digitsNeeded / 18 + 1;
+  if (digitsNeeded > 14)
+    result.reserve (digitsNeeded + 1);
+
+  Integer temp = value;
+  if (temp.m_sign) {
+    temp.m_sign = false;
+    result += '-';
+  }
+
+  if (eighteenDigitBlocks > 64) {
+    int64_t* parts = (int64_t*) malloc (sizeof (int64_t) * eighteenDigitBlocks);
+    toString (result, parts, temp);
+    free (parts);
+  } else {
+    int64_t parts[64];
+    toString (result, parts, temp);
+  }
+  return result;
 }

@@ -1,4 +1,4 @@
-version := 0.1-SNAPSHOT
+version := 4.0-SNAPSHOT
 libname := liblimf.$(version).a
 
 cc := c++

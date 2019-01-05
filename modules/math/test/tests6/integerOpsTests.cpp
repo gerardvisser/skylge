@@ -383,6 +383,50 @@ static bool testSub (void) {
   return !errorExamples.empty ();
 }
 
+static bool testToString (void) {
+  Random random;
+  IntegerOps ops (88);
+  Integer bigint = ops.createInteger ();
+
+  std::string errors = "";
+  ProgressionBar::init ("IntegerOps::toString(const Integer&)", 3);
+
+  std::string actual = ops.toString (bigint);
+  bool error = actual != "0";
+  if (error) {
+    errors += "Error for: 0.\n";
+  }
+  ProgressionBar::update (error);
+
+  int randomValue = -random.nextInt ();
+  bigint = randomValue;
+  actual = ops.toString (bigint);
+  error = actual != std::to_string (randomValue);
+  if (error) {
+    errors += "Error for: " + std::to_string (randomValue) + ".\n";
+  }
+  ProgressionBar::update (error);
+
+  /* Calculate factorial 100.  */
+  bigint = 1;
+  Integer next = ops.createInteger (2);
+  for (int i = 2; i <= 100; ++i) {
+    bigint = ops.mul (bigint, next);
+    ops.inc (next);
+  }
+
+  actual = ops.toString (bigint);
+  error = actual != "93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000";
+  if (error) {
+    errors += "Error for: 100!.\n";
+  }
+  ProgressionBar::update (error);
+
+  if (errors.length () > 0)
+    printf ("%s\n", errors.c_str ());
+  return errors.length () > 0;
+}
+
 const test_fn_t integerOpsTests[] = {
   testCreateInteger,
   testInc,
@@ -391,5 +435,6 @@ const test_fn_t integerOpsTests[] = {
   testAddInt,
   testSub,
   testMul,
-  testDiv
+  testDiv,
+  testToString
 };

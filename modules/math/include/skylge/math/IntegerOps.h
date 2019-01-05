@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2018 Gerard Visser.
+   Copyright (C) 2018, 2019 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 #ifndef SKYLGE__MATH___INTEGER_OPS_INCLUDED
 #define SKYLGE__MATH___INTEGER_OPS_INCLUDED
 
+#include <string>
 #include <skylge/math/Integer.h>
 
 class IntegerOps {
@@ -48,11 +49,14 @@ public:
   bool inc (Integer& dst);
   Integer& mul (const Integer& srcA, const Integer& srcB);
   bool sub (Integer& dst, const Integer& src);
+  std::string toString (const Integer& value);
 
 private:
   void baseDiv (Integer& result, const Integer& denominator, int denomBsr, int total);
   void baseMul (const Integer& srcA, const Integer& srcB);
+  int splitUp (int64_t* parts, Integer& value);
   bool subtractFromRemainder (const Integer& denominator, int denomBsr, int remainderBsr);
+  void toString (std::string& dst, int64_t* parts, Integer& value);
 };
 
 #endif

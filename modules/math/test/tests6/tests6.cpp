@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2018 Gerard Visser.
+   Copyright (C) 2018, 2019 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 #include "integerTests.h"
 
 int main (int argc, char** args, char** env) {
-  //RUN_TESTS (integerTests);
+  RUN_TESTS (integerTests);
   RUN_TESTS (integerOpsTests);
   return 0;
 }
