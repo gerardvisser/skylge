@@ -73,6 +73,8 @@ Real& Real::operator= (const Real& other) {
 }
 
 Real& Real::operator= (Real&& other) {
+  if (this == &other)
+    return *this;
   delete m_exponent;
   delete m_number;
   move (other);
