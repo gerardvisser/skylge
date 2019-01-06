@@ -40,9 +40,9 @@ Integer::Integer (int size) : m_size (size), m_max (0), m_sign (false) {
   }
 #endif
 
-  size_t bsize = size << 3;
-  m_buf = (uint64_t*) malloc (bsize);
-  memset (m_buf, 0, bsize);
+  size_t bufSizeBytes = size << 3;
+  m_buf = (uint64_t*) malloc (bufSizeBytes);
+  memset (m_buf, 0, bufSizeBytes);
 }
 
 Integer::Integer (const Integer& other) {
@@ -811,14 +811,18 @@ bool Integer::sign (void) const {
   return m_sign;
 }
 
+int Integer::sizeInBits (void) const {
+  return m_size * CAL_B;
+}
+
 
 void Integer::copy (const Integer& other) {
   m_size = other.m_size;
   m_sign = other.m_sign;
   m_max = other.m_max;
-  size_t bsize = m_size << 3;
-  m_buf = (uint64_t*) malloc (bsize);
-  memcpy (m_buf, other.m_buf, bsize);
+  size_t bufSizeBytes = m_size << 3;
+  m_buf = (uint64_t*) malloc (bufSizeBytes);
+  memcpy (m_buf, other.m_buf, bufSizeBytes);
 }
 
 void Integer::copyUsingExistingBuffer (const Integer& other) {

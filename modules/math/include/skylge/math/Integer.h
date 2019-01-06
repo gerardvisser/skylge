@@ -50,6 +50,7 @@ public:
   void shl (int x);
   void shr (int x);
   bool sign (void) const;
+  int sizeInBits (void) const;
 
 #ifdef DEBUG_MODE
   const uint64_t* buf (void) const;
