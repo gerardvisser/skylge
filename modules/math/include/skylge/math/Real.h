@@ -45,9 +45,10 @@ public:
   void makeInfinite (bool sign);
   bool sign (void) const;
 
-  /* TODO: Misschien tijdelijk: */
-  Integer exponent (void);
-  Integer number (void);
+#ifdef DEBUG_MODE
+  Integer exponent (void) const;
+  Integer number (void) const;
+#endif
 
 private:
   void copy (const Real& other);

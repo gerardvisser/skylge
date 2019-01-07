@@ -17,27 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include <ieee754.h>
+#include <stdexcept>
 #include <skylge/math/Real.h>
-
-#define DOUBLE_EXPONENT_BIAS     (IEEE754_DOUBLE_BIAS + DOUBLE_FRACTIONAL_WIDTH)
-#define DOUBLE_FRACTIONAL_WIDTH  52
-#define DOUBLE_SIGNIFICAND_WIDTH (DOUBLE_FRACTIONAL_WIDTH + 1)
-
-/* TODO: Deze naar elders verplaatsen. */
-static int bsf (int64_t value) {
-  if (value != 0) {
-    int64_t mask = 1;
-    int result = 0;
-    while ((value & mask) == 0) {
-      mask <<= 1;
-      ++result;
-    }
-    return result;
-  } else {
-    return 0;
-  }
-}
+#include "defs.h"
+#include "ieeeDouble.h"
+#include "utils.h"
 
 Real::Real (int size) {
   m_exponent = new Integer (size);
@@ -96,11 +80,23 @@ Real& Real::operator= (double val) {
       number <<= 32;
       number |= value.ieee.mantissa1;
 
-      int bsfVal = bsf (number);
+      int bsfVal = Utils::bsf (number);
       number >>= bsfVal;
       exponent += bsfVal;
 
-      /* TODO: Als CAL_B=6, dan moeten we wellicht nog meer wegschuiven.  */
+#if CAL_B == 6
+      int excess = Utils::bsr (number) - m_number->sizeInBits ();
+      if (excess > 0) {
+        bool round = Utils::getBit (number, excess - 1);
+        number >>= excess;
+        exponent += excess;
+        if (round)
+          ++number;
+        bsfVal = Utils::bsf (number);
+        number >>= bsfVal;
+        exponent += bsfVal;
+      }
+#endif
 
       if (value.ieee.negative)
         number = -number;
@@ -109,7 +105,7 @@ Real& Real::operator= (double val) {
     } else if (value.ieee.mantissa0 == 0 && value.ieee.mantissa1 == 0) {
       makeInfinite (value.ieee.negative);
     } else {
-      /* Not a Number: what TODO */
+      throw std::invalid_argument ("Cannot set NaN.");
     }
   } else {
     *m_exponent = 0;
@@ -119,18 +115,84 @@ Real& Real::operator= (double val) {
 }
 
 Real::operator double () const {
-  /* TODO: IMPLEMENT */
-  return 0.0;
+  if (isInfinite ()) {
+    if (sign ())
+      return -DOUBLE_INFINITY;
+    return DOUBLE_INFINITY;
+  }
+  /* TODO: handle zero case.  */
+
+  const int bsrVal = m_number->bsr ();
+  int expDelta = bsrVal - DOUBLE_SIGNIFICAND_WIDTH;
+  int exponent = (int) *m_exponent + expDelta + DOUBLE_FRACTIONAL_WIDTH;
+
+  if (exponent < DOUBLE_MIN_EXPONENT || exponent > DOUBLE_MAX_EXPONENT) {
+    if (m_exponent->sign ())
+      return 0;
+    if (sign ())
+      return -DOUBLE_INFINITY;
+    return DOUBLE_INFINITY;
+  }
+
+  int64_t significand;
+  if (bsrVal > 62) {
+    Integer temp (CAL_Q (m_number->sizeInBits ()));
+    temp = *m_number;
+    bool round = temp.getBit (expDelta - 1);
+    temp.shr (expDelta);
+    significand = temp;
+    if (significand < 0)
+      significand = -significand;
+    if (round) {
+      ++significand;
+      if (Utils::bsr (significand) == DOUBLE_SIGNIFICAND_WIDTH + 1) {
+        significand >>= 1;
+        ++exponent;
+      }
+    }
+  } else {
+    significand = *m_number;
+    if (significand < 0)
+      significand = -significand;
+    if (expDelta > 0) {
+      bool round = Utils::getBit (significand, expDelta - 1);
+      significand >>= expDelta;
+      if (round) {
+        ++significand;
+        if (Utils::bsr (significand) == DOUBLE_SIGNIFICAND_WIDTH + 1) {
+          significand >>= 1;
+          ++exponent;
+        }
+      }
+    } else {
+      significand <<= -expDelta;
+    }
+  }
+
+  if (exponent < DOUBLE_MIN_EXPONENT_N) {
+    expDelta = DOUBLE_MIN_EXPONENT_N - exponent;
+    significand >>= expDelta;
+    exponent = -IEEE754_DOUBLE_BIAS;
+  } else {
+    significand &= DOUBLE_FRACTION_MASK;
+  }
+
+  union ieee754_double result;
+
+  result.ieee.mantissa0 = significand >> 32;
+  result.ieee.mantissa1 = significand & 0xFFFFFFFF;
+  result.ieee.exponent = exponent + IEEE754_DOUBLE_BIAS;
+  result.ieee.negative = sign ();
+
+  return result.d;
 }
 
 bool Real::operator== (const Real& other) const {
-  /* TODO: IMPLEMENT */
-  return false;
+  return *this->m_number == *other.m_number && *this->m_exponent == *other.m_exponent;
 }
 
 bool Real::operator!= (const Real& other) const {
-  /* TODO: IMPLEMENT */
-  return false;
+  return !(*this == other);
 }
 
 bool Real::isInfinite (void) const {
@@ -159,12 +221,14 @@ void Real::move (Real& other) {
 }
 
 
-/* Temporary??? */
+#ifdef DEBUG_MODE
 
-Integer Real::exponent (void) {
+Integer Real::exponent (void) const {
   return *m_exponent;
 }
 
-Integer Real::number (void) {
+Integer Real::number (void) const {
   return *m_number;
 }
+
+#endif
