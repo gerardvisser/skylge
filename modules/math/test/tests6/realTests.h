@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2018, 2019 Gerard Visser.
+   Copyright (C) 2019 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,14 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include <skylge/testutils/testRunner.h>
-#include "integerOpsTests.h"
-#include "integerTests.h"
-#include "realTests.h"
+#ifndef REAL_TESTS_INCLUDED
+#define REAL_TESTS_INCLUDED
 
-int main (int argc, char** args, char** env) {
-  //RUN_TESTS (integerTests);
-  //RUN_TESTS (integerOpsTests);
-  RUN_TESTS (realTests);
-  return 0;
-}
+#include <skylge/testutils/testRunner.h>
+
+extern const test_fn_t realTests[7];
+
+#endif

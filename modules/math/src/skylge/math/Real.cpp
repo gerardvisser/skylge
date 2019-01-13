@@ -115,12 +115,14 @@ Real& Real::operator= (double val) {
 }
 
 Real::operator double () const {
-  if (isInfinite ()) {
-    if (sign ())
-      return -DOUBLE_INFINITY;
-    return DOUBLE_INFINITY;
+  if (m_number->isZero ()) {
+    if (isInfinite ()) {
+      if (sign ())
+        return -DOUBLE_INFINITY;
+      return DOUBLE_INFINITY;
+    }
+    return 0;
   }
-  /* TODO: handle zero case.  */
 
   const int bsrVal = m_number->bsr ();
   int expDelta = bsrVal - DOUBLE_SIGNIFICAND_WIDTH;
@@ -196,12 +198,13 @@ bool Real::operator!= (const Real& other) const {
 }
 
 bool Real::isInfinite (void) const {
-  /* TODO: IMPLEMENT */
-  return false;
+  return m_number->isZero () && !m_exponent->isZero ();
 }
 
 void Real::makeInfinite (bool sign) {
-  /* TODO: IMPLEMENT */
+  *m_number = 0;
+  *m_exponent = 1;
+  m_number->setSign (sign);
 }
 
 bool Real::sign (void) const {

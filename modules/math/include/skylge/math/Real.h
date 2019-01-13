@@ -42,7 +42,6 @@ public:
   bool operator!= (const Real& other) const;
 
   bool isInfinite (void) const;
-  void makeInfinite (bool sign);
   bool sign (void) const;
 
 #ifdef DEBUG_MODE
@@ -51,6 +50,8 @@ public:
 #endif
 
 private:
+  void makeInfinite (bool sign);
+
   void copy (const Real& other);
   void move (Real& other);
 };

@@ -47,6 +47,8 @@ public:
   int bsf (void) const;
   int bsr (void) const;
   bool getBit (int bitNo) const;
+  bool isZero (void) const;
+  void setSign (bool val);
   void shl (int x);
   void shr (int x);
   bool sign (void) const;

@@ -542,6 +542,11 @@ bool Integer::getBit (int bitNo) const {
   return (m_buf[q] & CAL_SMASK[r]) != 0;
 }
 
+bool Integer::isZero (void) const {
+  VALIDATE_INTEGER ("Integer::isZero(void)", *this, LOC_BEFORE);
+  return m_max == 0;
+}
+
 void Integer::lshl (Integer& incomingBits, int x) {
   VALIDATE_INTEGER ("Integer::lshl(Integer&, int)", *this, LOC_BEFORE);
   VALIDATE_INTEGER ("Integer::lshl(Integer&, int)", incomingBits, LOC_BEFORE);
@@ -711,6 +716,10 @@ void Integer::setMax (int fromIndex) {
   m_max = fromIndex + 1;
 
   VALIDATE_INTEGER ("Integer::setMax(int)", *this, LOC_AFTER);
+}
+
+void Integer::setSign (bool val) {
+  m_sign = val;
 }
 
 void Integer::shl (int x) {
