@@ -109,7 +109,31 @@ static bool testAssign (void) {
 }
 
 static bool testAssignSmallReals (void) {
-  /* TODO: IMPLEMENT */
+  Real real (2);
+
+  const int max = 63;
+  ErrorExamples errorExamples ("Error for: sign=%ld, exp=%03lX, frac=%013lX\n");
+  ProgressionBar::init ("Real::operator= (double val) [small reals]", max);
+
+  ASSERT_ASSIGN (real, 0.0, 0, 0);
+  ASSERT_ASSIGN (real, DOUBLE_INFINITY, 0, 1);
+  ASSERT_ASSIGN (real, -DOUBLE_INFINITY, 0, 1);
+  ASSERT_ASSIGN (real, 1.0, 1, 0);
+  ASSERT_ASSIGN (real, -0.625, -5, -3);
+  ASSERT_ASSIGN (real, 1 / 10.0, 0xCCD, -15);
+  ASSERT_ASSIGN (real, -1 / 100.0, -0xA3D, -18);
+  ASSERT_ASSIGN (real, 1 / 29.0, 0x235, -14);
+  ASSERT_ASSIGN (real, 4097.0, 0x801, 1);
+  ASSERT_ASSIGN (real, createDouble (false, 15, 0x5B0AD2B0053FC), 0x15B, 7);
+  ASSERT_ASSIGN (real, createDouble (false, -1022, 0), 1, -1022);
+  int64_t frac = 0x8000000000000;
+  for (int i = 0; i < 52; ++i) {
+    ASSERT_ASSIGN (real, createDouble (false, -1023, frac), 1, -1023 - i);
+    frac >>= 1;
+  }
+
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testCopy (void) {
