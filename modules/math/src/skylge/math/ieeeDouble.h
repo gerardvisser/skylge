@@ -20,8 +20,47 @@
 #ifndef SKYLGE__MATH__IEEE_DOUBLE_INCLUDED
 #define SKYLGE__MATH__IEEE_DOUBLE_INCLUDED
 
-/* This include is not available on Mac Os X.  */
-#include <ieee754.h>
+#if __has_include (<ieee754.h>)
+
+# include <ieee754.h>
+
+#elif __has_include (<machine/endian.h>)
+
+# include <machine/endian.h>
+
+# if BYTE_ORDER == LITTLE_ENDIAN
+
+union ieee754_double {
+  double d;
+  struct {
+    unsigned int mantissa1 : 32;
+    unsigned int mantissa0 : 20;
+    unsigned int exponent  : 11;
+    unsigned int negative  : 1;
+  } ieee;
+};
+
+# elif BYTE_ORDER == BIG_ENDIAN
+
+union ieee754_double {
+  double d;
+  struct {
+    unsigned int negative  : 1;
+    unsigned int exponent  : 11;
+    unsigned int mantissa0 : 20;
+    unsigned int mantissa1 : 32;
+  } ieee;
+};
+
+# else
+#  error Cannot compile on this platform.
+# endif
+
+# define IEEE754_DOUBLE_BIAS 0x3FF
+
+#else
+# error Cannot compile on this platform.
+#endif
 
 #define DOUBLE_EXPONENT_BIAS     (IEEE754_DOUBLE_BIAS + DOUBLE_FRACTIONAL_WIDTH)
 #define DOUBLE_FRACTION_MASK     0xFFFFFFFFFFFFF
