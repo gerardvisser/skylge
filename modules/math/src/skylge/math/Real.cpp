@@ -54,6 +54,7 @@ Real& Real::operator= (const Real& other) {
     delete m_number;
     copy (other);
   }
+  return *this;
 }
 
 Real& Real::operator= (Real&& other) {
@@ -62,6 +63,7 @@ Real& Real::operator= (Real&& other) {
   delete m_exponent;
   delete m_number;
   move (other);
+  return *this;
 }
 
 Real& Real::operator= (double val) {
