@@ -19,6 +19,7 @@
 
 #include <string.h>
 #include <stdexcept>
+#include <utility>
 #include <skylge/math/Real.h>
 #include <skylge/testutils/ErrorExamples.h>
 #include <skylge/testutils/progressionBar.h>
@@ -60,6 +61,19 @@ static double createDouble (bool sign, int exponent, int64_t fraction) {
   value.ieee.mantissa0 = fraction >> 32;
   value.ieee.mantissa1 = fraction & 0xFFFFFFFF;
   return value.d;
+}
+
+static int64_t doubleToInt64Bits (double d) {
+  union ieee754_double value;
+  value.d = d;
+  int64_t result = value.ieee.negative;
+  result <<= 11;
+  result |= value.ieee.exponent;
+  result <<= 20;
+  result |= value.ieee.mantissa0;
+  result <<= 32;
+  result |= value.ieee.mantissa1;
+  return result;
 }
 
 static bool testAssign (void) {
@@ -137,19 +151,198 @@ static bool testAssignSmallReals (void) {
 }
 
 static bool testCopy (void) {
-  /* TODO: IMPLEMENT */
+  Random random;
+  Real realA (9);
+  Real realB (9);
+
+  const int max = 5;
+  ErrorExamples errorExamples ("Error for: 0x%016lX\n");
+  ProgressionBar::init ("Real::operator= (const Real&)", max);
+
+  double value = random.nextDouble ();
+  realB = value;
+  realA = realB;
+  bool error = realA != realB;
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (value));
+  }
+  ProgressionBar::update (error);
+
+  value = 34359738369.0 * random.nextDouble ();
+  realB = value;
+  realA = realB;
+  error = realA != realB;
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (value));
+  }
+  ProgressionBar::update (error);
+
+  value = -DOUBLE_INFINITY;
+  realB = value;
+  realA = realB;
+  error = realA != realB;
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (value));
+  }
+  ProgressionBar::update (error);
+
+  /* Test self assigment.  */
+  value = -3.0 * random.nextDouble ();
+  realB = value;
+  realA = value;
+  realA = realA;
+  error = realA != realB;
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (value));
+  }
+  ProgressionBar::update (error);
+
+  /* Test assigment of a different sized real.  */
+  Real realC (10);
+  value = 1.0;
+  realC = value;
+  realA = realC;
+  error = !(realA == realC && realA.number ().sizeInBits () ==  realC.number ().sizeInBits ());
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (value));
+  }
+  ProgressionBar::update (error);
+
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testEqual (void) {
-  /* TODO: IMPLEMENT */
+  Random random;
+  Real realA (9);
+  Real realB (9);
+
+  const int max = 4;
+  ErrorExamples errorExamples ("Error for: valA=0x%016lX, valB=0x%016lX\n");
+  ProgressionBar::init ("Real::operator== (const Real&)", max);
+
+  double valA = 2147483648.0 * random.nextDouble () + 1;
+  realA = valA;
+  realB = valA;
+  bool error = !(realA == realB);
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (valA), doubleToInt64Bits (valA));
+  }
+  ProgressionBar::update (error);
+
+  union ieee754_double valB;
+  valB.d = valA;
+  --valB.ieee.exponent;
+  realB = valB.d;
+  error = realA == realB;
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (valA), doubleToInt64Bits (valB.d));
+  }
+  ProgressionBar::update (error);
+
+  valB.d = valA;
+  ++valB.ieee.mantissa0;
+  realB = valB.d;
+  error = realA == realB;
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (valA), doubleToInt64Bits (valB.d));
+  }
+  ProgressionBar::update (error);
+
+  valB.d = valA;
+  ++valB.ieee.exponent;
+  --valB.ieee.mantissa0;
+  realB = valB.d;
+  error = realA == realB;
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (valA), doubleToInt64Bits (valB.d));
+  }
+  ProgressionBar::update (error);
+
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testInequal (void) {
-  /* TODO: IMPLEMENT */
+  Random random;
+  Real realA (9);
+  Real realB (9);
+
+  const int max = 4;
+  ErrorExamples errorExamples ("Error for: valA=0x%016lX, valB=0x%016lX\n");
+  ProgressionBar::init ("Real::operator!= (const Real&)", max);
+
+  double valA = 2147483648.0 * random.nextDouble () + 1;
+  realA = valA;
+  realB = valA;
+  bool error = realA != realB;
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (valA), doubleToInt64Bits (valA));
+  }
+  ProgressionBar::update (error);
+
+  union ieee754_double valB;
+  valB.d = valA;
+  --valB.ieee.exponent;
+  realB = valB.d;
+  error = !(realA != realB);
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (valA), doubleToInt64Bits (valB.d));
+  }
+  ProgressionBar::update (error);
+
+  valB.d = valA;
+  ++valB.ieee.mantissa0;
+  realB = valB.d;
+  error = !(realA != realB);
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (valA), doubleToInt64Bits (valB.d));
+  }
+  ProgressionBar::update (error);
+
+  valB.d = valA;
+  ++valB.ieee.exponent;
+  --valB.ieee.mantissa0;
+  realB = valB.d;
+  error = !(realA != realB);
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (valA), doubleToInt64Bits (valB.d));
+  }
+  ProgressionBar::update (error);
+
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testMove (void) {
-  /* TODO: IMPLEMENT */
+  Real realA (9);
+
+  ErrorExamples errorExamples ("Error for: 0x%016lX\n");
+  ProgressionBar::init ("Real::operator= (Real&&)", 2);
+
+  double value = 8.0 / 7;
+  Real* realB = new Real (9);
+  *realB = value;
+  realA = std::move (*realB);
+  delete realB;
+  bool error = value != realA;
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (value));
+  }
+  ProgressionBar::update (error);
+
+  /* Test self assigment.  */
+  value = 1.602176634e-19;
+  realA = value;
+  realA = std::move (realA);
+  error = value != realA;
+  if (error) {
+    errorExamples.add (doubleToInt64Bits (value));
+  }
+  ProgressionBar::update (error);
+
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 static bool testToDouble (void) {
@@ -162,6 +355,6 @@ const test_fn_t realTests[] = {
   testEqual,
   testInequal,
   testCopy,
-  testMove,
-  testToDouble
+  testToDouble,
+  testMove
 };
