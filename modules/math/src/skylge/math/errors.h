@@ -2,7 +2,7 @@
    Author:  Gerard Visser
    e-mail:  visser.gerard(at)gmail.com
 
-   Copyright (C) 2018 Gerard Visser.
+   Copyright (C) 2018, 2019 Gerard Visser.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -57,9 +57,6 @@
     } \
   }
 
-  /* Noot: willen we controleren of sign altijd false als waarde 0?  */
-
-
 # define VALIDATE_INTEGER_LAST_BIT_0(funcName, integerObj, beforeOrAfter) \
   VALIDATE_INTEGER (funcName, integerObj, beforeOrAfter) \
   { \
@@ -70,11 +67,33 @@
     } \
   }
 
+# define VALIDATE_REAL(funcName, realObj, beforeOrAfter) \
+  { \
+    const Integer& dbg_numb = (realObj).number (); \
+    const Integer& dbg_expo = (realObj).exponent (); \
+    if (dbg_numb.sizeInBits () != dbg_expo.sizeInBits ()) { \
+      PRINT_MESSAGE_AND_EXIT ("[%s][%s][tested=%s] m_exponent not of same size as m_number.\n", \
+                              beforeOrAfter, funcName, #realObj); \
+    } \
+    if (dbg_numb.isZero ()) { \
+      if (!(realObj).isInfinite () && (realObj).sign ()) { \
+        PRINT_MESSAGE_AND_EXIT ("[%s][%s][tested=%s] sign set of a real number that represents zero.\n", \
+                                beforeOrAfter, funcName, #realObj); \
+      } \
+    } else { \
+      if (!dbg_numb.getBit (0)) { \
+        PRINT_MESSAGE_AND_EXIT ("[%s][%s][tested=%s] least significant bit not set even though the number does not represent zero or infinity.\n", \
+                                beforeOrAfter, funcName, #realObj); \
+      } \
+    } \
+  }
+
 
 #else
 
 # define VALIDATE_INTEGER(funcName, integerObj, beforeOrAfter)
 # define VALIDATE_INTEGER_LAST_BIT_0(funcName, integerObj, beforeOrAfter)
+# define VALIDATE_REAL(funcName, realObj, beforeOrAfter)
 
 #endif
 

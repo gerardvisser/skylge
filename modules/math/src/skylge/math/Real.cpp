@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <skylge/math/Real.h>
 #include "defs.h"
+#include "errors.h"
 #include "ieeeDouble.h"
 #include "utils.h"
 
@@ -44,6 +45,9 @@ Real::~Real (void) {
 }
 
 Real& Real::operator= (const Real& other) {
+  VALIDATE_REAL ("Real::operator=(const Real&)", *this, LOC_BEFORE);
+  VALIDATE_REAL ("Real::operator=(const Real&)", other, LOC_BEFORE);
+
   if (this == &other)
     return *this;
   if (m_exponent->sizeInBits () == other.m_exponent->sizeInBits ()) {
@@ -54,19 +58,28 @@ Real& Real::operator= (const Real& other) {
     delete m_number;
     copy (other);
   }
+
+  VALIDATE_REAL ("Real::operator=(const Real&)", *this, LOC_AFTER);
   return *this;
 }
 
 Real& Real::operator= (Real&& other) {
+  VALIDATE_REAL ("Real::operator=(Real&&)", *this, LOC_BEFORE);
+  VALIDATE_REAL ("Real::operator=(Real&&)", other, LOC_BEFORE);
+
   if (this == &other)
     return *this;
   delete m_exponent;
   delete m_number;
   move (other);
+
+  VALIDATE_REAL ("Real::operator=(Real&&)", *this, LOC_AFTER);
   return *this;
 }
 
 Real& Real::operator= (double val) {
+  VALIDATE_REAL ("Real::operator=(double)", *this, LOC_BEFORE);
+
   if (val != 0) {
     union ieee754_double value;
     value.d = val;
@@ -113,10 +126,14 @@ Real& Real::operator= (double val) {
     *m_exponent = 0;
     *m_number = 0;
   }
+
+  VALIDATE_REAL ("Real::operator=(double)", *this, LOC_AFTER);
   return *this;
 }
 
 Real::operator double () const {
+  VALIDATE_REAL ("Real::operator double()", *this, LOC_BEFORE);
+
   if (m_number->isZero ()) {
     if (isInfinite ()) {
       if (sign ())
@@ -192,6 +209,9 @@ Real::operator double () const {
 }
 
 bool Real::operator== (const Real& other) const {
+  VALIDATE_REAL ("Real::operator==(const Real&)", *this, LOC_BEFORE);
+  VALIDATE_REAL ("Real::operator==(const Real&)", other, LOC_BEFORE);
+
   return *this->m_number == *other.m_number && *this->m_exponent == *other.m_exponent;
 }
 
@@ -204,9 +224,13 @@ bool Real::isInfinite (void) const {
 }
 
 void Real::makeInfinite (bool sign) {
+  VALIDATE_REAL ("Real::makeInfinite(bool)", *this, LOC_BEFORE);
+
   *m_number = 0;
   *m_exponent = 1;
   m_number->setSign (sign);
+
+  VALIDATE_REAL ("Real::makeInfinite(bool)", *this, LOC_AFTER);
 }
 
 bool Real::sign (void) const {
@@ -228,11 +252,11 @@ void Real::move (Real& other) {
 
 #ifdef DEBUG_MODE
 
-Integer Real::exponent (void) const {
+Integer& Real::exponent (void) const {
   return *m_exponent;
 }
 
-Integer Real::number (void) const {
+Integer& Real::number (void) const {
   return *m_number;
 }
 
