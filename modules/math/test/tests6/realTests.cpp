@@ -17,9 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdexcept>
 #include <utility>
+#include <skylge/math/IntegerOps.h>
 #include <skylge/math/Real.h>
 #include <skylge/testutils/ErrorExamples.h>
 #include <skylge/testutils/progressionBar.h>
@@ -29,6 +32,9 @@
 
 #define ASSERT_ASSIGN(real, valueToSet, expectedNumber, expectedExponent) \
   assert (errorExamples, real, valueToSet, expectedNumber, expectedExponent)
+
+#define ASSERT_TO_DOUBLE(real, expectedValue) \
+  assert (errorExamples, real, expectedValue)
 
 static void assert (ErrorExamples& errorExamples, Real& real, double valueToSet, int64_t expectedNumber, int expectedExponent) {
   real = valueToSet;
@@ -54,6 +60,33 @@ static void assert (ErrorExamples& errorExamples, Real& real, double valueToSet,
   ProgressionBar::update (error);
 }
 
+static void assert (ErrorExamples& errorExamples, const Real& real, double expectedValue) {
+  if (real.number ().sizeInBits () != 72) {
+    printf ("realTests.cpp: assert: real not of expected size (72 bits).\n");
+    exit (EXIT_FAILURE);
+  }
+  bool error = real != expectedValue;
+  if (error) {
+    Integer num = real.number ();
+    bool sign = num.sign ();
+    if (sign) {
+      num.setSign (false);
+    }
+    num.shr (60);
+    int64_t hbits = num;
+    num = real.number ();
+    if (sign) {
+      num.setSign (false);
+    }
+    num.shl (12);
+    num.shr (12);
+    int64_t lbits = num;
+    int64_t expo = real.exponent ();
+    errorExamples.add (sign, expo, hbits, lbits);
+  }
+  ProgressionBar::update (error);
+}
+
 static double createDouble (bool sign, int exponent, int64_t fraction) {
   union ieee754_double value;
   value.ieee.negative = sign;
@@ -74,6 +107,18 @@ static int64_t doubleToInt64Bits (double d) {
   result <<= 32;
   result |= value.ieee.mantissa1;
   return result;
+}
+
+static void setValue (Real& real, IntegerOps& ops, bool sign, int exponent, int h12bits, int64_t l60bits) {
+  Integer& number = const_cast<Integer&> (real.number ());
+  Integer& expo = const_cast<Integer&> (real.exponent ());
+  expo = exponent;
+  number = h12bits;
+  number.shl (30);
+  ops.add (number, (int) (l60bits >> 30));
+  number.shl (30);
+  ops.add (number, (int) (l60bits & 0x3FFFFFFF));
+  number.setSign (sign);
 }
 
 static bool testAssign (void) {
@@ -346,7 +391,92 @@ static bool testMove (void) {
 }
 
 static bool testToDouble (void) {
-  /* TODO: IMPLEMENT */
+  IntegerOps ops (12);
+  Real real (12);
+
+  const int max = 25;
+  ErrorExamples errorExamples ("Error for: sign=%ld, exp=%ld, num=0x%03lX%015lX\n");
+  ProgressionBar::init ("Real::operator double ()", max);
+
+  real = 0.0;
+  ASSERT_TO_DOUBLE (real, 0);
+
+  real = DOUBLE_INFINITY;
+  ASSERT_TO_DOUBLE (real, DOUBLE_INFINITY);
+
+  real = -DOUBLE_INFINITY;
+  ASSERT_TO_DOUBLE (real, -DOUBLE_INFINITY);
+
+  setValue (real, ops, false, 971, 0x0, 0x1FFFFFFFFFFFFF);
+  ASSERT_TO_DOUBLE (real, createDouble (false, 1023, 0xFFFFFFFFFFFFF));
+
+  setValue (real, ops, false, 1024, 0x0, 0x1);
+  ASSERT_TO_DOUBLE (real, DOUBLE_INFINITY);
+
+  setValue (real, ops, false, 972, 0x0, 0x1FFFFFFFFFFFFF);
+  ASSERT_TO_DOUBLE (real, DOUBLE_INFINITY);
+
+  setValue (real, ops, true, 1023, 0x0, 0x3);
+  ASSERT_TO_DOUBLE (real, -DOUBLE_INFINITY);
+
+  setValue (real, ops, false, -1022, 0x0, 0x1);
+  ASSERT_TO_DOUBLE (real, createDouble (false, -1022, 0x0));
+
+  setValue (real, ops, false, -1023, 0x0, 0x1);
+  ASSERT_TO_DOUBLE (real, createDouble (false, -1023, 0x8000000000000));
+
+  setValue (real, ops, true, -1026, 0x0, 0x5);
+  ASSERT_TO_DOUBLE (real, createDouble (true, -1023, 0x5000000000000));
+
+  setValue (real, ops, false, -1074, 0x0, 0x1);
+  ASSERT_TO_DOUBLE (real, createDouble (false, -1023, 0x1));
+
+  setValue (real, ops, false, -1075, 0x0, 0x1);
+  ASSERT_TO_DOUBLE (real, 0.0);
+
+  setValue (real, ops, true, -1075, 0x0, 0x1);
+  ASSERT_TO_DOUBLE (real, 0.0);
+
+  setValue (real, ops, false, -64, 0xCFC, 0x4D00460CDD9503B);
+  ASSERT_TO_DOUBLE (real, createDouble (false, 7, 0x9F89A008C19BB));
+
+  setValue (real, ops, false, -69, 0xE08, 0x53D8963A03E58C1);
+  ASSERT_TO_DOUBLE (real, createDouble (false, 2, 0xC10A7B12C7408));
+
+  setValue (real, ops, false, -70, 0x7FF, 0xFFFFFFFFFFE5883);
+  ASSERT_TO_DOUBLE (real, createDouble (false, 1, 0x0));
+
+  setValue (real, ops, true, -60, 0x035, 0x3D887D9893E7D45);
+  ASSERT_TO_DOUBLE (real, createDouble (true, 5, 0xA9EC43ECC49F4));
+
+  setValue (real, ops, true, -65, 0x007, 0x59E2FAE79C4212F);
+  ASSERT_TO_DOUBLE (real, createDouble (true, -3, 0xD678BEB9E7108));
+
+  setValue (real, ops, false, -55, 0x001, 0x6DC2D61AC8E7F4D);
+  ASSERT_TO_DOUBLE (real, createDouble (false, 5, 0x6DC2D61AC8E7F));
+
+  setValue (real, ops, false, -59, 0x000, 0xEBBA5BB83746A51);
+  ASSERT_TO_DOUBLE (real, createDouble (false, 0, 0xD774B7706E8D5));
+
+  setValue (real, ops, true, -60, 0x000, 0x3FFFFFFFFFFFFF3);
+  ASSERT_TO_DOUBLE (real, createDouble (true, -2, 0x0));
+
+  setValue (real, ops, true, -50, 0x000, 0x067C85B28945765);
+  ASSERT_TO_DOUBLE (real, createDouble (true, 4, 0x9F216CA2515D9));
+
+  setValue (real, ops, true, -54, 0x000, 0x02978D27D676261);
+  ASSERT_TO_DOUBLE (real, createDouble (true, -1, 0x4BC693EB3B131));
+
+  real = 1 / 53.0;
+  ASSERT_TO_DOUBLE (real, 1 / 53.0);
+
+  real = -2.5;
+  ASSERT_TO_DOUBLE (real, -2.5);
+
+  /* TODO: FINISH */
+
+  errorExamples.print ();
+  return !errorExamples.empty ();
 }
 
 const test_fn_t realTests[] = {

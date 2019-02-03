@@ -45,8 +45,8 @@ public:
   bool sign (void) const;
 
 #ifdef DEBUG_MODE
-  Integer& exponent (void) const;
-  Integer& number (void) const;
+  const Integer& exponent (void) const;
+  const Integer& number (void) const;
 #endif
 
 private:

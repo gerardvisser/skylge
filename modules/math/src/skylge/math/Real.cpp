@@ -252,11 +252,11 @@ void Real::move (Real& other) {
 
 #ifdef DEBUG_MODE
 
-Integer& Real::exponent (void) const {
+const Integer& Real::exponent (void) const {
   return *m_exponent;
 }
 
-Integer& Real::number (void) const {
+const Integer& Real::number (void) const {
   return *m_number;
 }
 
