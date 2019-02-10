@@ -17,45 +17,32 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SKYLGE__MATH___REAL_INCLUDED
-#define SKYLGE__MATH___REAL_INCLUDED
+#ifndef SKYLGE__MATH___REAL_OPS_INCLUDED
+#define SKYLGE__MATH___REAL_OPS_INCLUDED
 
-#include <skylge/math/Integer.h>
+#include <skylge/math/IntegerOps.h>
+#include <skylge/math/Real.h>
 
-class Real {
+class RealOps : public IntegerOps {
 private:
-  Integer* m_exponent;
-  Integer* m_number;
+  Real* m_auxR;
+  Integer* m_auxI;
 
 public:
-  explicit Real (int size);
-  Real (const Real& other);
-  Real (Real&& other);
-  virtual ~Real (void);
+  explicit RealOps (int size);
+  virtual ~RealOps (void);
 
-  Real& operator= (const Real& other);
-  Real& operator= (Real&& other);
-  Real& operator= (double val);
-  operator double () const;
-
-  bool operator== (const Real& other) const;
-  bool operator!= (const Real& other) const;
-
-  bool isInfinite (void) const;
-  bool sign (void) const;
-
-#ifdef DEBUG_MODE
-  const Integer& exponent (void) const;
-  const Integer& number (void) const;
-#endif
+  bool add (Real& dst, const Real& src);
+  Real createReal (double value = 0.0);
+  bool div (Real& dst, const Real& src);
+  bool mul (Real& dst, const Real& src);
+  bool sub (Real& dst, const Real& src);
+  std::string toString (const Real& value, int precision = 6);
 
 private:
-  void makeInfinite (bool sign);
-
-  void copy (const Real& other);
-  void move (Real& other);
-
-  friend class RealOps;
+  void addEqualExponents (Real& dst, const Real& src);
+  void addFiniteNonzero (Real& dst, const Real& src);
+  void addUnequalExponents (Real& dst, const Real& src, int expDiff);
 };
 
 #endif

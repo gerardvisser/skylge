@@ -29,6 +29,7 @@ private:
   Integer* m_remainder;
   Integer* m_numerator;
   Integer* m_aux;
+protected:
   const int m_size;
   const int m_bsize;
 
@@ -50,6 +51,9 @@ public:
   Integer& mul (const Integer& srcA, const Integer& srcB);
   bool sub (Integer& dst, const Integer& src);
   std::string toString (const Integer& value);
+
+protected:
+  void setHighestBit (Integer& dst);
 
 private:
   void baseDiv (Integer& result, const Integer& denominator, int denomBsr, int total);

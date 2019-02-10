@@ -311,6 +311,20 @@ Integer& IntegerOps::mul (const Integer& srcA, const Integer& srcB) {
   return *m_mulResult;
 }
 
+void IntegerOps::setHighestBit (Integer& dst) {
+  VALIDATE_INTEGER ("IntegerOps::setHighestBit(Integer&)", dst, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (dst.m_size != m_size) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::setHighestBit(Integer&)] The argument `dst' needs to be of size %d.\n", m_size);
+  }
+#endif
+
+  dst.m_max = m_size;
+  dst.m_buf[m_size - 1] |= CAL_SMASK[CAL_B - 1];
+
+  VALIDATE_INTEGER ("IntegerOps::setHighestBit(Integer&)", dst, LOC_AFTER);
+}
+
 bool IntegerOps::sub (Integer& dst, const Integer& src) {
   VALIDATE_INTEGER ("IntegerOps::sub(Integer&, const Integer&)", dst, LOC_BEFORE);
   VALIDATE_INTEGER ("IntegerOps::sub(Integer&, const Integer&)", src, LOC_BEFORE);
