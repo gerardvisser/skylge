@@ -549,9 +549,6 @@ static bool testLshl (void) {
   return !errorExamples.empty ();
 }
 
-/*
-NOOT: Wil ik zowel Integer::operator int64_t () als Integer::operator int () houden?
- */
 static bool testMove (void) {
   Integer bigintA (4);
   Integer* bigintB;

@@ -22,6 +22,6 @@
 
 #include <skylge/testutils/testRunner.h>
 
-extern const test_fn_t integerOpsTests[9];
+extern const test_fn_t integerOpsTests[12];
 
 #endif

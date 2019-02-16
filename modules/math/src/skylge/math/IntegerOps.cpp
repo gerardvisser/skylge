@@ -232,6 +232,12 @@ Integer& IntegerOps::div (Integer& dst, const Integer& src) {
 
   if (dst.m_max > 0 && src.m_max > 0) {
 
+    if (&dst == &src) {
+      dst = 1;
+      *m_remainder = 0;
+      return *m_remainder;
+    }
+
     const int numeratorBsr = dst.bsr ();
     const int denominatorBsr = src.bsr ();
 

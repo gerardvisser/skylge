@@ -473,8 +473,6 @@ static bool testToDouble (void) {
   real = -2.5;
   ASSERT_TO_DOUBLE (real, -2.5);
 
-  /* TODO: FINISH */
-
   errorExamples.print ();
   return !errorExamples.empty ();
 }

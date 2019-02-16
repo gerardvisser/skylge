@@ -27,6 +27,16 @@
 #include <skylge/testutils/Random.h>
 #include "integerOpsTests.h"
 
+class TestIntegerOps : public IntegerOps {
+public:
+  explicit TestIntegerOps (int size) : IntegerOps (size) {
+  }
+
+  void setHighestBit (Integer& dst) {
+    IntegerOps::setHighestBit (dst);
+  }
+};
+
 static bool testAdd (void) {
   Random random;
   IntegerOps ops (4);
@@ -96,6 +106,46 @@ static bool testAdd (void) {
     bool error = !(carry == expectedCarry && (int) bigintA == expectedSum);
     if (error) {
       errorExamples.add (fixedA[i], fixedB[i]);
+    }
+    ProgressionBar::update (error);
+  }
+
+  errorExamples.print ();
+  return !errorExamples.empty ();
+}
+
+static bool testAdd2 (void) {
+  Random random;
+  IntegerOps ops (4);
+  Integer bigint = ops.createInteger ();
+
+  const int max = 2000000;
+  ErrorExamples errorExamples ("Error for: A=%ld (abs(A)=0x%06lX).\n");
+  ProgressionBar::init ("IntegerOps::add (Integer&, const Integer&): same object for both operands", max);
+  for (int i = 0; i < max; ++i) {
+    int64_t val = random.nextInt (0x1FFFFFF) - 0xFFFFFF;
+    bigint = val;
+
+    bool expectedCarry;
+    int64_t expectedSum = val + val;
+    if (expectedSum > 0xFFFFFF) {
+      expectedSum &= 0xFFFFFF;
+      expectedCarry = true;
+    } else if (expectedSum == -0x1000000) {
+      expectedSum = 0;
+      expectedCarry = true;
+    } else if (expectedSum < -0x1000000) {
+      expectedSum |= 0x1000000;
+      expectedCarry = true;
+    } else {
+      expectedCarry = false;
+    }
+
+    bool carry = ops.add (bigint, bigint);
+
+    bool error = !(carry == expectedCarry && (int) bigint == expectedSum);
+    if (error) {
+      errorExamples.add (val, val < 0 ? -val : val);
     }
     ProgressionBar::update (error);
   }
@@ -270,6 +320,37 @@ static bool testDiv (void) {
   return !errorExamples.empty ();
 }
 
+static bool testDiv2 (void) {
+  IntegerOps ops (4);
+  Integer bigint = ops.createInteger ();
+
+  ErrorExamples errorExamples ("Error for: A=%ld.\n");
+  ProgressionBar::init ("IntegerOps::div (Integer&, const Integer&): same object for both operands", 2);
+
+  bigint = 12345;
+  Integer& remainder = ops.div (bigint, bigint);
+  bool error = !((int) bigint == 1 && (int) remainder == 0);
+  if (error) {
+    errorExamples.add (12345);
+  }
+  ProgressionBar::update (error);
+
+  bigint = 0;
+  try {
+    ops.div (bigint, bigint);
+    error = true;
+  } catch (std::exception& x) {
+    error = strcmp (x.what (), "Division by zero.") != 0;
+  }
+  if (error) {
+    errorExamples.add (0);
+  }
+  ProgressionBar::update (error);
+
+  errorExamples.print ();
+  return !errorExamples.empty ();
+}
+
 static bool testInc (void) {
   IntegerOps ops (3);
   Integer bigint = ops.createInteger ();
@@ -318,6 +399,24 @@ static bool testMul (void) {
     }
     ProgressionBar::update (error);
   }
+  errorExamples.print ();
+  return !errorExamples.empty ();
+}
+
+static bool testSetHighestBit (void) {
+  TestIntegerOps ops (4);
+  Integer bigint = ops.createInteger ();
+
+  ErrorExamples errorExamples ("Error for: %ld.\n");
+  ProgressionBar::init ("IntegerOps::setHighestBit (Integer&)", 1);
+
+  ops.setHighestBit (bigint);
+  bool error = (int) bigint != 0x800000;
+  if (error) {
+    errorExamples.add (0);
+  }
+  ProgressionBar::update (error);
+
   errorExamples.print ();
   return !errorExamples.empty ();
 }
@@ -432,9 +531,12 @@ const test_fn_t integerOpsTests[] = {
   testInc,
   testDec,
   testAdd,
+  testAdd2,
   testAddInt,
   testSub,
   testMul,
   testDiv,
-  testToString
+  testDiv2,
+  testToString,
+  testSetHighestBit
 };

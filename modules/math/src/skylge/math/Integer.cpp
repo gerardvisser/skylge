@@ -206,9 +206,8 @@ bool Integer::absAdd (const Integer& other) {
   for (i = 0; i < max; ++i) {
     if (carry) {
       CAL_CLEAR_CARRY (m_buf[i - 1]);
-      ++m_buf[i];
     }
-    m_buf[i] += other.m_buf[i];
+    m_buf[i] += other.m_buf[i] + carry;
     carry = CAL_CARRY (m_buf[i]);
   }
 
