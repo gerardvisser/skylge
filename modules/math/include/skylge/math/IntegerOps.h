@@ -53,6 +53,7 @@ public:
   std::string toString (const Integer& value);
 
 protected:
+  void setAllBits (Integer& dst);
   void setHighestBit (Integer& dst);
 
 private:

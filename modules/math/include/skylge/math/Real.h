@@ -42,6 +42,7 @@ public:
   bool operator!= (const Real& other) const;
 
   bool isInfinite (void) const;
+  bool isZero (void) const;
   bool sign (void) const;
 
 #ifdef DEBUG_MODE

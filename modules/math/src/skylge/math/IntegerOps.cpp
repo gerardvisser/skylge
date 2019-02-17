@@ -317,6 +317,22 @@ Integer& IntegerOps::mul (const Integer& srcA, const Integer& srcB) {
   return *m_mulResult;
 }
 
+void IntegerOps::setAllBits (Integer& dst) {
+  VALIDATE_INTEGER ("IntegerOps::setAllBits(Integer&)", dst, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (dst.m_size != m_size) {
+    PRINT_MESSAGE_AND_EXIT ("[IntegerOps::setAllBits(Integer&)] The argument `dst' needs to be of size %d.\n", m_size);
+  }
+#endif
+
+  for (int i = 0; i < m_size; ++i) {
+    dst.m_buf[i] = CAL_LMASK[0];
+  }
+  dst.m_max = m_size;
+
+  VALIDATE_INTEGER ("IntegerOps::setAllBits(Integer&)", dst, LOC_AFTER);
+}
+
 void IntegerOps::setHighestBit (Integer& dst) {
   VALIDATE_INTEGER ("IntegerOps::setHighestBit(Integer&)", dst, LOC_BEFORE);
 #ifdef DEBUG_MODE

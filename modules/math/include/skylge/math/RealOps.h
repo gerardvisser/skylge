@@ -23,7 +23,7 @@
 #include <skylge/math/IntegerOps.h>
 #include <skylge/math/Real.h>
 
-class RealOps : public IntegerOps {
+class RealOps : protected IntegerOps {
 private:
   Real* m_auxR;
   Integer* m_auxI;
@@ -43,6 +43,7 @@ private:
   void addEqualExponents (Real& dst, const Real& src);
   void addFiniteNonzero (Real& dst, const Real& src);
   void addUnequalExponents (Real& dst, const Real& src, int expDiff);
+  void mulFiniteNonzero (Real& dst, const Real& src);
 };
 
 #endif

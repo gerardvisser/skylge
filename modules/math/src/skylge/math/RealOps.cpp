@@ -155,21 +155,128 @@ Real RealOps::createReal (double value) {
 }
 
 bool RealOps::div (Real& dst, const Real& src) {
+  VALIDATE_REAL ("RealOps::div(Real&, const Real&)", dst, LOC_BEFORE);
+  VALIDATE_REAL ("RealOps::div(Real&, const Real&)", src, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (!(dst.m_number->sizeInBits () == m_bsize && src.m_number->sizeInBits () == m_bsize)) {
+    PRINT_MESSAGE_AND_EXIT ("[RealOps::div(Real&, const Real&)] The two arguments `dst' and `src' need to be of size %d.\n", m_size);
+  }
+#endif
+
+  bool error = false;
+
   /* TODO: IMPLEMENT */
-  return false;
+
+  VALIDATE_REAL ("RealOps::div(Real&, const Real&)", dst, LOC_AFTER);
+  return error;
 }
 
 bool RealOps::mul (Real& dst, const Real& src) {
-  /* TODO: IMPLEMENT */
-  return false;
+  VALIDATE_REAL ("RealOps::mul(Real&, const Real&)", dst, LOC_BEFORE);
+  VALIDATE_REAL ("RealOps::mul(Real&, const Real&)", src, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (!(dst.m_number->sizeInBits () == m_bsize && src.m_number->sizeInBits () == m_bsize)) {
+    PRINT_MESSAGE_AND_EXIT ("[RealOps::mul(Real&, const Real&)] The two arguments `dst' and `src' need to be of size %d.\n", m_size);
+  }
+#endif
+
+  bool error = false;
+  bool sign = dst.sign () ^ src.sign ();
+
+  if (!src.m_number->isZero ()) {
+    if (!dst.m_number->isZero ()) {
+      mulFiniteNonzero (dst, src);
+    } else if (dst.isInfinite ()) {
+      dst.makeInfinite (sign);
+    } else {
+      dst = 0;
+    }
+  } else if (src.isInfinite ()) {
+    if (dst.isZero ()) {
+      error = true;
+    } else {
+      dst.makeInfinite (sign);
+    }
+  } else {
+    if (dst.isInfinite ()) {
+      error = true;
+    } else {
+      dst = 0;
+    }
+  }
+
+  VALIDATE_REAL ("RealOps::mul(Real&, const Real&)", dst, LOC_AFTER);
+  return error;
+}
+
+void RealOps::mulFiniteNonzero (Real& dst, const Real& src) {
+  Integer& result = IntegerOps::mul (*dst.m_number, *src.m_number);
+  int exponentExtra = 0;
+  int excess = result.bsr () - m_bsize;
+  if (excess > 0) {
+    bool round = result.getBit (excess - 1);
+    result.shr (excess);
+    exponentExtra += excess;
+    if (round) {
+      if (result.sign ())
+        dec (result);
+      else
+        inc (result);
+    }
+  }
+  int bsfVal = result.bsf ();
+  result.shr (bsfVal);
+  exponentExtra += bsfVal;
+
+  bool carry = IntegerOps::add (*dst.m_exponent, *src.m_exponent);
+  if (carry) {
+    if (!dst.m_exponent->sign ()) {
+      dst.makeInfinite (result.sign ());
+      return;
+    }
+    dst.m_exponent->setSign (false);
+    IntegerOps::add (*dst.m_exponent, -exponentExtra);
+    if (!dst.m_exponent->sign ()) {
+      dst = 0;
+      return;
+    }
+    exponentExtra = -((int) *dst.m_exponent + 1);
+    setAllBits (*dst.m_exponent);
+  }
+
+  carry = IntegerOps::add (*dst.m_exponent, exponentExtra);
+  if (carry) {
+    dst.makeInfinite (result.sign ());
+    return;
+  }
+  *dst.m_number = result;
 }
 
 bool RealOps::sub (Real& dst, const Real& src) {
+  VALIDATE_REAL ("RealOps::sub(Real&, const Real&)", dst, LOC_BEFORE);
+  VALIDATE_REAL ("RealOps::sub(Real&, const Real&)", src, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (!(dst.m_number->sizeInBits () == m_bsize && src.m_number->sizeInBits () == m_bsize)) {
+    PRINT_MESSAGE_AND_EXIT ("[RealOps::sub(Real&, const Real&)] The two arguments `dst' and `src' need to be of size %d.\n", m_size);
+  }
+#endif
+
+  bool error = false;
+
   /* TODO: IMPLEMENT */
-  return false;
+
+  VALIDATE_REAL ("RealOps::sub(Real&, const Real&)", dst, LOC_AFTER);
+  return error;
 }
 
 std::string RealOps::toString (const Real& value, int precision) {
+  VALIDATE_REAL ("RealOps::toString(const Real&, int)", value, LOC_BEFORE);
+#ifdef DEBUG_MODE
+  if (value.m_number->sizeInBits () != m_bsize) {
+    PRINT_MESSAGE_AND_EXIT ("[RealOps::toString(const Real&, int)] Argument `value' needs to be of size %d.\n", m_size);
+  }
+#endif
+
   /* TODO: IMPLEMENT */
   return "Not implemented";
 }

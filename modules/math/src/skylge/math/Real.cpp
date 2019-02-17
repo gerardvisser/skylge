@@ -223,6 +223,10 @@ bool Real::isInfinite (void) const {
   return m_number->isZero () && !m_exponent->isZero ();
 }
 
+bool Real::isZero (void) const {
+  return m_number->isZero () && m_exponent->isZero ();
+}
+
 void Real::makeInfinite (bool sign) {
   VALIDATE_REAL ("Real::makeInfinite(bool)", *this, LOC_BEFORE);
 
